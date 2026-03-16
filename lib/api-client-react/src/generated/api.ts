@@ -21,6 +21,9 @@ import type {
   DiagnoseResponse,
   ErrorResponse,
   HealthStatus,
+  McpCallRequest,
+  McpToolListResponse,
+  McpToolResult,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -193,4 +196,167 @@ export const useDiagnoseCrop = <
   TContext
 > => {
   return useMutation(getDiagnoseCropMutationOptions(options));
+};
+
+/**
+ * Returns all registered MCP tool servers with their names, descriptions, and parameter schemas.
+ * @summary List available MCP tool servers
+ */
+export const getListMcpToolsUrl = () => {
+  return `/api/mcp/tools`;
+};
+
+export const listMcpTools = async (
+  options?: RequestInit,
+): Promise<McpToolListResponse> => {
+  return customFetch<McpToolListResponse>(getListMcpToolsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMcpToolsQueryKey = () => {
+  return [`/api/mcp/tools`] as const;
+};
+
+export const getListMcpToolsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMcpTools>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listMcpTools>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMcpToolsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMcpTools>>> = ({
+    signal,
+  }) => listMcpTools({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMcpTools>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMcpToolsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMcpTools>>
+>;
+export type ListMcpToolsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List available MCP tool servers
+ */
+
+export function useListMcpTools<
+  TData = Awaited<ReturnType<typeof listMcpTools>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listMcpTools>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMcpToolsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Calls a specific MCP tool server with the provided parameters and returns its structured result.
+ * @summary Invoke an MCP tool by name
+ */
+export const getCallMcpToolUrl = () => {
+  return `/api/mcp/call`;
+};
+
+export const callMcpTool = async (
+  mcpCallRequest: McpCallRequest,
+  options?: RequestInit,
+): Promise<McpToolResult> => {
+  return customFetch<McpToolResult>(getCallMcpToolUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(mcpCallRequest),
+  });
+};
+
+export const getCallMcpToolMutationOptions = <
+  TError = ErrorType<ErrorResponse | McpToolResult>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof callMcpTool>>,
+    TError,
+    { data: BodyType<McpCallRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof callMcpTool>>,
+  TError,
+  { data: BodyType<McpCallRequest> },
+  TContext
+> => {
+  const mutationKey = ["callMcpTool"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof callMcpTool>>,
+    { data: BodyType<McpCallRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return callMcpTool(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CallMcpToolMutationResult = NonNullable<
+  Awaited<ReturnType<typeof callMcpTool>>
+>;
+export type CallMcpToolMutationBody = BodyType<McpCallRequest>;
+export type CallMcpToolMutationError = ErrorType<ErrorResponse | McpToolResult>;
+
+/**
+ * @summary Invoke an MCP tool by name
+ */
+export const useCallMcpTool = <
+  TError = ErrorType<ErrorResponse | McpToolResult>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof callMcpTool>>,
+    TError,
+    { data: BodyType<McpCallRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof callMcpTool>>,
+  TError,
+  { data: BodyType<McpCallRequest> },
+  TContext
+> => {
+  return useMutation(getCallMcpToolMutationOptions(options));
 };

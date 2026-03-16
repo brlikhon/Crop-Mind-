@@ -136,6 +136,53 @@ export interface DiagnoseResponse {
   totalDurationMs: number;
 }
 
+export type McpToolParamType =
+  (typeof McpToolParamType)[keyof typeof McpToolParamType];
+
+export const McpToolParamType = {
+  string: "string",
+  number: "number",
+  boolean: "boolean",
+} as const;
+
+export interface McpToolParam {
+  name: string;
+  type: McpToolParamType;
+  required: boolean;
+  description: string;
+  enum?: string[];
+}
+
+export interface McpToolSchema {
+  name: string;
+  description: string;
+  params: McpToolParam[];
+}
+
+export interface McpToolListResponse {
+  tools: McpToolSchema[];
+}
+
+/**
+ * Parameters to pass to the tool
+ */
+export type McpCallRequestParams = { [key: string]: unknown };
+
+export interface McpCallRequest {
+  /** Name of the MCP tool to invoke */
+  toolName: string;
+  /** Parameters to pass to the tool */
+  params?: McpCallRequestParams;
+}
+
+export interface McpToolResult {
+  toolName: string;
+  success: boolean;
+  data: unknown;
+  error?: string;
+  durationMs: number;
+}
+
 export interface ErrorResponse {
   error: string;
 }

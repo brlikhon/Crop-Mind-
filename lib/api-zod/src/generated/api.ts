@@ -134,3 +134,46 @@ export const DiagnoseCropResponse = zod.object({
   ),
   totalDurationMs: zod.number(),
 });
+
+/**
+ * Returns all registered MCP tool servers with their names, descriptions, and parameter schemas.
+ * @summary List available MCP tool servers
+ */
+export const ListMcpToolsResponse = zod.object({
+  tools: zod.array(
+    zod.object({
+      name: zod.string(),
+      description: zod.string(),
+      params: zod.array(
+        zod.object({
+          name: zod.string(),
+          type: zod.enum(["string", "number", "boolean"]),
+          required: zod.boolean(),
+          description: zod.string(),
+          enum: zod.array(zod.string()).optional(),
+        }),
+      ),
+    }),
+  ),
+});
+
+/**
+ * Calls a specific MCP tool server with the provided parameters and returns its structured result.
+ * @summary Invoke an MCP tool by name
+ */
+export const CallMcpToolBody = zod.object({
+  toolName: zod.string().describe("Name of the MCP tool to invoke"),
+  params: zod
+    .object({})
+    .passthrough()
+    .optional()
+    .describe("Parameters to pass to the tool"),
+});
+
+export const CallMcpToolResponse = zod.object({
+  toolName: zod.string(),
+  success: zod.boolean(),
+  data: zod.unknown(),
+  error: zod.string().optional(),
+  durationMs: zod.number(),
+});

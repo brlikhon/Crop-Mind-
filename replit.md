@@ -68,7 +68,15 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
   - `weather-agent.ts` — WeatherAdaptationAgent (climate impact analysis)
   - `market-agent.ts` — MarketSubsidyAgent (economic viability + subsidies)
   - `treatment-agent.ts` — TreatmentProtocolAgent (actionable treatment plan)
+- MCP Tool Layer: `src/mcp/` contains the MCP-compatible tool server infrastructure:
+  - `types.ts` — McpTool, McpToolSchema, McpToolResult, McpToolCallLog interfaces
+  - `registry.ts` — central tool registry with listTools(), callTool(), call logging
+  - `weather-tool.ts` — WeatherTool: real HTTP calls to Open-Meteo API for agricultural weather data
+  - `crop-alert-tool.ts` — CropAlertTool: queries crop_alerts table for active pest/disease outbreaks
+  - `market-price-tool.ts` — MarketPriceTool: queries market_prices table for APAC commodity prices
+  - `subsidy-tool.ts` — SubsidyTool: queries subsidies table for government agricultural programs
 - CropAgent route: POST /api/cropagent/diagnose — runs multi-agent orchestration
+- MCP routes: GET /api/mcp/tools (list tool schemas), POST /api/mcp/call (invoke tool by name)
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
 - `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
 - Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
@@ -79,7 +87,10 @@ Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client insta
 
 - `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
 - `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
+- `src/schema/crop-alerts.ts` — crop_alerts table (pest/disease outbreak alerts, 12 rows seeded across 10 APAC countries)
+- `src/schema/market-prices.ts` — market_prices table (commodity prices, 20 rows for 10 crops in 10 countries)
+- `src/schema/subsidies.ts` — subsidies table (government support programs, 12 rows across 10 APAC countries)
+- `seed-mcp.ts` — seed script for MCP data: `npx tsx lib/db/seed-mcp.ts`
 - `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
 - Exports: `.` (pool, db, schema), `./schema` (schema only)
 
