@@ -1,5 +1,5 @@
 import { pool } from "@workspace/db";
-import { generateEmbedding, buildCaseText } from "./embedding.js";
+import { generateEmbeddingAsync, buildCaseText } from "./embedding.js";
 
 export interface CaseSearchParams {
   symptomsDescription: string;
@@ -34,7 +34,7 @@ export async function searchSimilarCases(params: CaseSearchParams): Promise<Case
   const start = Date.now();
   const { symptomsDescription, cropType, country, topK = 5 } = params;
 
-  const queryEmbedding = generateEmbedding(symptomsDescription);
+  const queryEmbedding = await generateEmbeddingAsync(symptomsDescription);
   const vecStr = `[${queryEmbedding.join(",")}]`;
 
   const conditions: string[] = [];
@@ -138,7 +138,7 @@ export async function submitCase(submission: CaseSubmission): Promise<CaseSubmit
     treatment: submission.treatmentApplied,
   });
 
-  const embedding = generateEmbedding(caseText);
+  const embedding = await generateEmbeddingAsync(caseText);
   const vecStr = `[${embedding.join(",")}]`;
 
   const client = await pool.connect();

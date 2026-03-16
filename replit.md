@@ -76,7 +76,7 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
   - `market-price-tool.ts` — MarketPriceTool: queries market_prices table for APAC commodity prices
   - `subsidy-tool.ts` — SubsidyTool: queries subsidies table for government agricultural programs
 - Vector Intelligence: `src/vectors/` contains AlloyDB-compatible vector case intelligence:
-  - `embedding.ts` — deterministic text→768-dim vector embedding (word hash + trigram hash, normalized)
+  - `embedding.ts` — AI-first embedding service: probes OpenAI embeddings API with exponential backoff retry, falls back to deterministic text-hash (word + trigram → 1536-dim normalized vector) when API unavailable
   - `search.ts` — pgvector cosine similarity search with crop/country filters, weighted re-ranking (60% similarity + 40% outcome), and case submission with auto-embedding
 - CropAgent route: POST /api/cropagent/diagnose — runs multi-agent orchestration
 - MCP routes: GET /api/mcp/tools (list tool schemas), POST /api/mcp/call (invoke tool by name)
@@ -94,7 +94,7 @@ Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client insta
 - `src/schema/crop-alerts.ts` — crop_alerts table (pest/disease outbreak alerts, 12 rows seeded across 10 APAC countries)
 - `src/schema/market-prices.ts` — market_prices table (commodity prices, 20 rows for 10 crops in 10 countries)
 - `src/schema/subsidies.ts` — subsidies table (government support programs, 12 rows across 10 APAC countries)
-- `src/schema/crop-cases.ts` — crop_cases table with pgvector 768-dim embedding column (550 seeded cases across 50 disease templates, 13 crops, 10 APAC countries)
+- `src/schema/crop-cases.ts` — crop_cases table with pgvector 1536-dim embedding column (550 seeded cases across 50 disease templates, 13 crops, 10 APAC countries)
 - `seed-mcp.ts` — seed script for MCP data: `npx tsx lib/db/seed-mcp.ts`
 - `seed-cases.ts` — seed script for vector cases: `npx tsx lib/db/seed-cases.ts` (uses raw SQL due to Drizzle vector column mapping issue)
 - `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)

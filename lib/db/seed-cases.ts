@@ -1,6 +1,6 @@
 import { pool } from "./src/index.js";
 
-const DIMENSIONS = 768;
+const DIMENSIONS = 1536;
 
 function hashCode(str: string): number {
   let hash = 0;
