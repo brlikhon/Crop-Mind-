@@ -177,3 +177,68 @@ export const CallMcpToolResponse = zod.object({
   error: zod.string().optional(),
   durationMs: zod.number(),
 });
+
+/**
+ * Accepts a symptom description, generates its embedding, runs pgvector cosine similarity search with optional filters, and returns the top results re-ranked by combining semantic similarity with treatment success rate.
+ * @summary Vector similarity search over historical crop cases
+ */
+
+export const SearchCasesBody = zod.object({
+  symptomsDescription: zod
+    .string()
+    .min(1)
+    .describe(
+      "Natural language description of the crop symptoms to search for similar historical cases",
+    ),
+  cropType: zod.string().optional().describe("Optional filter by crop type"),
+  country: zod.string().optional().describe("Optional filter by country"),
+  topK: zod
+    .number()
+    .optional()
+    .describe("Number of results to return (default 5, max 20)"),
+});
+
+export const SearchCasesResponse = zod.object({
+  query: zod.string(),
+  filters: zod.object({
+    cropType: zod.string().optional(),
+    country: zod.string().optional(),
+  }),
+  candidatesFound: zod.number(),
+  results: zod.array(
+    zod.object({
+      caseId: zod.string(),
+      cropType: zod.string(),
+      country: zod.string(),
+      region: zod.string(),
+      symptomsText: zod.string(),
+      diagnosis: zod.string(),
+      treatmentApplied: zod.string(),
+      outcomeScore: zod.number(),
+      resolvedAt: zod.string(),
+      similarityScore: zod.number(),
+      weightedScore: zod.number(),
+    }),
+  ),
+  durationMs: zod.number(),
+});
+
+/**
+ * Adds a new resolved case with its embedding to the vector knowledge base. This closes the learning loop — new farmer outcomes improve future recommendations.
+ * @summary Submit a resolved crop case to the vector store
+ */
+export const submitCaseBodyOutcomeScoreMin = 0;
+export const submitCaseBodyOutcomeScoreMax = 1;
+
+export const SubmitCaseBody = zod.object({
+  cropType: zod.string(),
+  country: zod.string(),
+  region: zod.string(),
+  symptomsText: zod.string(),
+  diagnosis: zod.string(),
+  treatmentApplied: zod.string(),
+  outcomeScore: zod
+    .number()
+    .min(submitCaseBodyOutcomeScoreMin)
+    .max(submitCaseBodyOutcomeScoreMax),
+});

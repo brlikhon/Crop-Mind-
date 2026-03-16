@@ -183,6 +183,67 @@ export interface McpToolResult {
   durationMs: number;
 }
 
+export interface CaseSearchRequest {
+  /**
+   * Natural language description of the crop symptoms to search for similar historical cases
+   * @minLength 1
+   */
+  symptomsDescription: string;
+  /** Optional filter by crop type */
+  cropType?: string;
+  /** Optional filter by country */
+  country?: string;
+  /** Number of results to return (default 5, max 20) */
+  topK?: number;
+}
+
+export type CaseSearchResponseFilters = {
+  cropType?: string;
+  country?: string;
+};
+
+export interface SimilarCase {
+  caseId: string;
+  cropType: string;
+  country: string;
+  region: string;
+  symptomsText: string;
+  diagnosis: string;
+  treatmentApplied: string;
+  outcomeScore: number;
+  resolvedAt: string;
+  similarityScore: number;
+  weightedScore: number;
+}
+
+export interface CaseSearchResponse {
+  query: string;
+  filters: CaseSearchResponseFilters;
+  candidatesFound: number;
+  results: SimilarCase[];
+  durationMs: number;
+}
+
+export interface CaseSubmitRequest {
+  cropType: string;
+  country: string;
+  region: string;
+  symptomsText: string;
+  diagnosis: string;
+  treatmentApplied: string;
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  outcomeScore: number;
+}
+
+export interface CaseSubmitResponse {
+  caseId: string;
+  success: boolean;
+  message: string;
+}
+
 export interface ErrorResponse {
   error: string;
 }

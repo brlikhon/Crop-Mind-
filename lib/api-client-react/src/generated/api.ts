@@ -17,6 +17,10 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  CaseSearchRequest,
+  CaseSearchResponse,
+  CaseSubmitRequest,
+  CaseSubmitResponse,
   DiagnoseRequest,
   DiagnoseResponse,
   ErrorResponse,
@@ -359,4 +363,178 @@ export const useCallMcpTool = <
   TContext
 > => {
   return useMutation(getCallMcpToolMutationOptions(options));
+};
+
+/**
+ * Accepts a symptom description, generates its embedding, runs pgvector cosine similarity search with optional filters, and returns the top results re-ranked by combining semantic similarity with treatment success rate.
+ * @summary Vector similarity search over historical crop cases
+ */
+export const getSearchCasesUrl = () => {
+  return `/api/cases/search`;
+};
+
+export const searchCases = async (
+  caseSearchRequest: CaseSearchRequest,
+  options?: RequestInit,
+): Promise<CaseSearchResponse> => {
+  return customFetch<CaseSearchResponse>(getSearchCasesUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(caseSearchRequest),
+  });
+};
+
+export const getSearchCasesMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof searchCases>>,
+    TError,
+    { data: BodyType<CaseSearchRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof searchCases>>,
+  TError,
+  { data: BodyType<CaseSearchRequest> },
+  TContext
+> => {
+  const mutationKey = ["searchCases"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof searchCases>>,
+    { data: BodyType<CaseSearchRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return searchCases(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SearchCasesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof searchCases>>
+>;
+export type SearchCasesMutationBody = BodyType<CaseSearchRequest>;
+export type SearchCasesMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Vector similarity search over historical crop cases
+ */
+export const useSearchCases = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof searchCases>>,
+    TError,
+    { data: BodyType<CaseSearchRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof searchCases>>,
+  TError,
+  { data: BodyType<CaseSearchRequest> },
+  TContext
+> => {
+  return useMutation(getSearchCasesMutationOptions(options));
+};
+
+/**
+ * Adds a new resolved case with its embedding to the vector knowledge base. This closes the learning loop — new farmer outcomes improve future recommendations.
+ * @summary Submit a resolved crop case to the vector store
+ */
+export const getSubmitCaseUrl = () => {
+  return `/api/cases/submit`;
+};
+
+export const submitCase = async (
+  caseSubmitRequest: CaseSubmitRequest,
+  options?: RequestInit,
+): Promise<CaseSubmitResponse> => {
+  return customFetch<CaseSubmitResponse>(getSubmitCaseUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(caseSubmitRequest),
+  });
+};
+
+export const getSubmitCaseMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitCase>>,
+    TError,
+    { data: BodyType<CaseSubmitRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitCase>>,
+  TError,
+  { data: BodyType<CaseSubmitRequest> },
+  TContext
+> => {
+  const mutationKey = ["submitCase"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitCase>>,
+    { data: BodyType<CaseSubmitRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return submitCase(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitCaseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitCase>>
+>;
+export type SubmitCaseMutationBody = BodyType<CaseSubmitRequest>;
+export type SubmitCaseMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Submit a resolved crop case to the vector store
+ */
+export const useSubmitCase = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitCase>>,
+    TError,
+    { data: BodyType<CaseSubmitRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitCase>>,
+  TError,
+  { data: BodyType<CaseSubmitRequest> },
+  TContext
+> => {
+  return useMutation(getSubmitCaseMutationOptions(options));
 };
