@@ -9,6 +9,7 @@ import type {
   WeatherAssessment,
   MarketIntelligence,
   TreatmentProtocol,
+  McpToolCallEntry,
 } from "./types.js";
 import { createSession, runAgentWithTrace } from "./session.js";
 import { runCropDiseaseAgent } from "./crop-disease-agent.js";
@@ -415,6 +416,14 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
 
   const treatmentFindingRef = findAgent(session.findings, "TreatmentProtocolAgent");
 
+  const allMcpCalls: McpToolCallEntry[] = [];
+  for (const finding of session.findings) {
+    const calls = finding.details?.mcpToolCalls as McpToolCallEntry[] | undefined;
+    if (calls && Array.isArray(calls)) {
+      allMcpCalls.push(...calls);
+    }
+  }
+
   const result: OrchestratorResult = {
     sessionId: session.id,
     query: farmerQuery,
@@ -427,6 +436,7 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
     traces: session.traces,
     orchestratorDecisions: decisions,
     conflictResolutions,
+    mcpToolCalls: allMcpCalls,
     totalDurationMs: Date.now() - startTime,
   };
 

@@ -63,6 +63,17 @@ export interface ConflictResolution {
   chosenAgent: string;
 }
 
+export interface McpToolCallEntry {
+  toolName: string;
+  params: Record<string, unknown>;
+  success: boolean;
+  data: unknown;
+  error?: string;
+  durationMs: number;
+  timestamp: number;
+  calledBy: string;
+}
+
 export interface DiagnoseResponse {
   sessionId: string;
   query: any;
@@ -75,6 +86,7 @@ export interface DiagnoseResponse {
   traces: AgentTrace[];
   orchestratorDecisions: OrchestratorDecision[];
   conflictResolutions: ConflictResolution[];
+  mcpToolCalls: McpToolCallEntry[];
   totalDurationMs: number;
 }
 

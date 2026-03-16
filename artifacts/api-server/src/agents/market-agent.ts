@@ -1,6 +1,7 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
-import type { AgentSession, AgentFinding, MarketIntelligence } from "./types.js";
+import { callTool } from "../mcp/registry.js";
+import type { AgentSession, AgentFinding, MarketIntelligence, McpToolCallEntry } from "./types.js";
 
 const SYSTEM_PROMPT = `You are MarketSubsidyAgent, an expert in APAC agricultural economics specializing in crop commodity markets and government agricultural subsidy programs.
 
@@ -9,21 +10,63 @@ Given a crop situation and diagnosis, advise whether the farmer should:
 2. Replant with a different variety or crop
 3. Apply for any available government subsidies or insurance
 
+You will be provided with REAL market price data and subsidy program information from databases. Use this data to ground your economic analysis.
+
 You must respond with ONLY valid JSON matching this schema:
 {
-  "currentPrice": "string - current approximate price per kg/ton for this crop in the region",
+  "currentPrice": "string - current price per kg/ton for this crop based on provided data",
   "priceOutlook": "string - short-term price trend",
   "recommendation": "string - treat/replant/hybrid recommendation with economic reasoning",
-  "availableSubsidies": ["string array - relevant government programs in this country"],
+  "availableSubsidies": ["string array - relevant government programs from provided data"],
   "summary": "string - one paragraph economic advice",
   "reasoning": "string - your economic analysis reasoning"
 }
 
-Use your knowledge of APAC agricultural markets and government programs. Be specific about prices and programs relevant to the country.`;
+Base your analysis on the actual market and subsidy data provided.`;
 
 export async function runMarketAgent(session: AgentSession): Promise<AgentFinding> {
   const { query } = session;
   const diseaseFindings = session.findings.find((f) => f.agentName === "CropDiseaseAgent");
+
+  const mcpCalls: McpToolCallEntry[] = [];
+
+  const priceResult = await callTool("MarketPriceTool", {
+    cropType: query.cropType,
+    country: query.country,
+  });
+  mcpCalls.push({
+    toolName: "MarketPriceTool",
+    params: { cropType: query.cropType, country: query.country },
+    success: priceResult.success,
+    data: priceResult.data,
+    error: priceResult.error,
+    durationMs: priceResult.durationMs,
+    timestamp: Date.now(),
+    calledBy: "MarketSubsidyAgent",
+  });
+
+  const subsidyResult = await callTool("SubsidyTool", {
+    country: query.country,
+    cropType: query.cropType,
+  });
+  mcpCalls.push({
+    toolName: "SubsidyTool",
+    params: { country: query.country, cropType: query.cropType },
+    success: subsidyResult.success,
+    data: subsidyResult.data,
+    error: subsidyResult.error,
+    durationMs: subsidyResult.durationMs,
+    timestamp: Date.now(),
+    calledBy: "MarketSubsidyAgent",
+  });
+
+  const priceContext = priceResult.success
+    ? `\n\nREAL MARKET PRICE DATA:\n${JSON.stringify(priceResult.data, null, 2)}`
+    : "\n\nMarket price data unavailable — use general knowledge for this crop and region.";
+
+  const subsidyContext = subsidyResult.success
+    ? `\n\nGOVERNMENT SUBSIDY PROGRAMS:\n${JSON.stringify(subsidyResult.data, null, 2)}`
+    : "";
 
   const userMessage = `Provide economic analysis for this agricultural situation:
 - Crop: ${query.cropType}
@@ -31,8 +74,9 @@ export async function runMarketAgent(session: AgentSession): Promise<AgentFindin
 - Symptoms: ${query.symptoms.join(", ")}
 ${diseaseFindings ? `- Diagnosis: ${diseaseFindings.summary}` : ""}
 - Original description: "${query.rawQuery}"
+${priceContext}${subsidyContext}
 
-Advise on the economic viability of treatment vs replanting, current market prices, and any government support programs available in ${query.country}.`;
+Advise on the economic viability of treatment vs replanting based on the actual market data and available subsidies.`;
 
   const response = await openai.chat.completions.create({
     model: AGENT_MODEL,
@@ -73,7 +117,7 @@ Advise on the economic viability of treatment vs replanting, current market pric
       status: "error",
       confidence: 0.3,
       summary,
-      details: { marketIntelligence: intelligence },
+      details: { marketIntelligence: intelligence, mcpToolCalls: mcpCalls },
       reasoning,
     };
   }
@@ -83,7 +127,7 @@ Advise on the economic viability of treatment vs replanting, current market pric
     status: "success",
     confidence: 0.75,
     summary,
-    details: { marketIntelligence: intelligence },
+    details: { marketIntelligence: intelligence, mcpToolCalls: mcpCalls },
     reasoning,
   };
 }

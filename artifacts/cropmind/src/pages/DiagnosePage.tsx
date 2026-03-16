@@ -9,13 +9,12 @@ export default function DiagnosePage() {
   const { toast } = useToast();
   const diagnoseMutation = useDiagnoseCrop();
   const searchMutation = useSearchCases();
-  
+
   const [hasStarted, setHasStarted] = useState(false);
 
   const handleDiagnose = (query: string) => {
     setHasStarted(true);
-    
-    // Fire both mutations in parallel
+
     diagnoseMutation.mutate({ query }, {
       onError: (err) => {
         toast({
@@ -30,7 +29,6 @@ export default function DiagnosePage() {
     searchMutation.mutate({ symptomsDescription: query, topK: 3 }, {
       onError: (err) => {
         console.error("Vector search failed:", err);
-        // Don't fail the whole UI if just search fails, but log it
         toast({
           title: "Historical Search Issue",
           description: "Could not retrieve similar cases.",
@@ -41,23 +39,33 @@ export default function DiagnosePage() {
   };
 
   const isPending = diagnoseMutation.isPending;
+  const diagnosisData = diagnoseMutation.data;
 
   return (
     <div className="w-full flex flex-col items-center pb-24">
-      {/* Show form only if we haven't started OR if we want to allow new queries from the top. 
-          Let's keep the form at the top so users can tweak and resubmit. */}
-      
       <div className={`w-full transition-all duration-500 ${hasStarted ? 'mb-8' : 'mt-12 md:mt-24'}`}>
         <DiagnosticForm onSubmit={handleDiagnose} isPending={isPending} />
       </div>
 
-      {isPending && <AgentVisualizer />}
-
-      {!isPending && diagnoseMutation.data && (
-        <ResultsDashboard 
-          diagnosis={diagnoseMutation.data} 
-          cases={searchMutation.data} 
+      {isPending && (
+        <AgentVisualizer
+          traces={[]}
+          isLoading={true}
         />
+      )}
+
+      {!isPending && diagnosisData && (
+        <>
+          <AgentVisualizer
+            traces={diagnosisData.traces}
+            isLoading={false}
+            totalDurationMs={diagnosisData.totalDurationMs}
+          />
+          <ResultsDashboard
+            diagnosis={diagnosisData}
+            cases={searchMutation.data}
+          />
+        </>
       )}
     </div>
   );

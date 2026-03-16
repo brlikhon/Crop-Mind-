@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Database, Bot, BrainCircuit, MessageSquare, ShieldCheck, Server, Cloud, Cpu } from "lucide-react";
+import { Database, Bot, BrainCircuit, MessageSquare, ShieldCheck, Server, Cloud, Cpu, CheckCircle2, TrendingUp, Rocket } from "lucide-react";
 
 export default function ArchitecturePage() {
   const containerVariants = {
@@ -24,7 +24,6 @@ export default function ArchitecturePage() {
         </p>
       </div>
 
-      {/* Visual Diagram */}
       <motion.div 
         variants={containerVariants}
         initial="hidden"
@@ -33,7 +32,6 @@ export default function ArchitecturePage() {
       >
         <div className="flex flex-col items-center relative">
           
-          {/* Layer 1: Input */}
           <motion.div variants={itemVariants} className="w-full max-w-md bg-background border rounded-xl p-4 flex items-center gap-4 shadow-sm z-10">
             <div className="bg-primary/10 p-3 rounded-lg text-primary">
               <MessageSquare className="w-6 h-6" />
@@ -44,10 +42,8 @@ export default function ArchitecturePage() {
             </div>
           </motion.div>
 
-          {/* Arrow */}
           <div className="h-8 w-px bg-border my-2"></div>
 
-          {/* Layer 2: Orchestrator */}
           <motion.div variants={itemVariants} className="w-full bg-gradient-to-br from-primary to-primary/80 border-primary rounded-xl p-6 flex flex-col items-center shadow-lg shadow-primary/20 z-10 text-primary-foreground relative">
             <BrainCircuit className="w-10 h-10 mb-3" />
             <h3 className="font-bold text-lg mb-1">2. ADK Orchestrator</h3>
@@ -55,7 +51,6 @@ export default function ArchitecturePage() {
               Parses intent, conditionally routes to sub-agents, resolves conflicting advice (e.g. moisture vs fungal risk), synthesizes final output.
             </p>
             
-            {/* Sub-Agents Row inside Orchestrator context */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-8">
               {['Disease Agent', 'Weather Agent', 'Market Agent', 'Treatment Agent'].map((agent, i) => (
                 <div key={i} className="bg-black/20 backdrop-blur-md rounded-lg p-3 text-center border border-white/10">
@@ -66,13 +61,11 @@ export default function ArchitecturePage() {
             </div>
           </motion.div>
 
-          {/* Arrows splitting */}
           <div className="flex w-full max-w-2xl justify-around my-4">
              <div className="h-12 w-px bg-border/80 relative before:absolute before:w-2 before:h-2 before:bg-border before:-bottom-1 before:-left-[3.5px] before:rounded-full"></div>
              <div className="h-12 w-px bg-border/80 relative before:absolute before:w-2 before:h-2 before:bg-border before:-bottom-1 before:-left-[3.5px] before:rounded-full"></div>
           </div>
 
-          {/* Layer 3: Context & Data */}
           <div className="flex flex-col md:flex-row gap-6 w-full z-10">
             
             <motion.div variants={itemVariants} className="flex-1 bg-card border rounded-xl p-6 shadow-sm">
@@ -114,10 +107,8 @@ export default function ArchitecturePage() {
 
           </div>
 
-          {/* Arrow merging back */}
           <div className="h-10 w-px bg-border my-4"></div>
 
-          {/* Layer 5: Output */}
           <motion.div variants={itemVariants} className="w-full max-w-lg bg-background border-2 border-primary/20 rounded-xl p-5 flex items-center gap-4 shadow-md z-10">
             <div className="bg-success/20 p-3 rounded-full text-success shrink-0">
               <CheckCircle2 className="w-6 h-6" />
@@ -131,12 +122,11 @@ export default function ArchitecturePage() {
         </div>
       </motion.div>
 
-      {/* About Section */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="grid grid-cols-1 md:grid-cols-2 gap-8"
+        className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16"
       >
         <div>
           <h2 className="text-2xl font-bold mb-4 text-foreground">The Problem</h2>
@@ -156,18 +146,61 @@ export default function ArchitecturePage() {
             </li>
             <li className="flex items-start gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-secondary mt-2"></div>
-              <span className="text-sm text-foreground"><strong className="text-secondary">MCP Tool Servers:</strong> Secure execution boundaries that give agents live read-access to external APIs (Open-Meteo) and internal PostgreSQL databases.</span>
+              <span className="text-sm text-foreground"><strong className="text-secondary">MCP Tool Servers:</strong> Secure execution boundaries that give agents live read-access to external APIs (Open-Meteo) and internal PostgreSQL databases for real-time grounding.</span>
             </li>
             <li className="flex items-start gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-accent-foreground mt-2"></div>
-              <span className="text-sm text-foreground"><strong className="text-accent-foreground">AlloyDB Vector Intelligence:</strong> Utilizing pgvector to perform semantic similarity searches against a knowledge base of past successful treatments.</span>
+              <span className="text-sm text-foreground"><strong className="text-accent-foreground">AlloyDB Vector Intelligence:</strong> Utilizing pgvector to perform semantic similarity searches against a knowledge base of past successful treatments across 10 APAC countries.</span>
             </li>
           </ul>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="bg-card border rounded-2xl p-8 shadow-sm"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-primary/10 p-2 rounded-lg text-primary">
+            <Rocket className="w-6 h-6" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground">Deployment Architecture</h2>
+        </div>
+        <p className="text-muted-foreground mb-6">
+          CropMind is designed for production deployment on Google Cloud, scaling to serve 500M+ farmers across APAC.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="border rounded-xl p-5 bg-background/50">
+            <div className="flex items-center gap-2 mb-3">
+              <Cpu className="w-5 h-5 text-primary" />
+              <h4 className="font-bold text-sm">Cloud Run</h4>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Containerized API server with auto-scaling. The Express backend and multi-agent orchestrator run as a single Cloud Run service with concurrency tuned for LLM call latency. The React frontend is served as static assets via Cloud CDN.
+            </p>
+          </div>
+          <div className="border rounded-xl p-5 bg-background/50">
+            <div className="flex items-center gap-2 mb-3">
+              <Database className="w-5 h-5 text-secondary" />
+              <h4 className="font-bold text-sm">AlloyDB for PostgreSQL</h4>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Fully managed PostgreSQL-compatible database with pgvector for vector similarity search. Stores MCP tool data (alerts, prices, subsidies) and the 550+ historical case embeddings. Supports cross-region read replicas for APAC-wide low latency.
+            </p>
+          </div>
+          <div className="border rounded-xl p-5 bg-background/50">
+            <div className="flex items-center gap-2 mb-3">
+              <BrainCircuit className="w-5 h-5 text-accent-foreground" />
+              <h4 className="font-bold text-sm">Vertex AI + Gemini</h4>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Production deployment targets Vertex AI with Gemini models for agent reasoning and text-embedding-005 for case vectorization. The modular agent architecture allows swapping model providers without changing orchestration logic.
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>
   );
 }
-
-// Re-importing CheckCircle2 locally for this file
-import { CheckCircle2, TrendingUp } from "lucide-react";

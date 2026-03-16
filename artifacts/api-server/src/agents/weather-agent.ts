@@ -1,6 +1,7 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
-import type { AgentSession, AgentFinding, WeatherAssessment } from "./types.js";
+import { callTool } from "../mcp/registry.js";
+import type { AgentSession, AgentFinding, WeatherAssessment, McpToolCallEntry } from "./types.js";
 
 const SYSTEM_PROMPT = `You are WeatherAdaptationAgent, an expert agricultural meteorologist specializing in APAC climate patterns and their impact on crop health and treatment timing.
 
@@ -9,9 +10,11 @@ Given crop symptoms and a region, assess how current and forecast weather condit
 2. The optimal timing for treatment application
 3. Any weather-related risks that could worsen the situation
 
+You will be provided with REAL weather data from the Open-Meteo API and any active crop alerts for the region. Use this data to ground your assessment.
+
 You must respond with ONLY valid JSON matching this schema:
 {
-  "currentConditions": "string - description of typical current weather for this region and season",
+  "currentConditions": "string - description of current weather based on provided data",
   "forecast": "string - 7-day outlook relevant to agriculture",
   "weatherRisk": "string - how weather affects the crop condition",
   "adaptations": ["string array of weather-specific recommendations"],
@@ -19,11 +22,52 @@ You must respond with ONLY valid JSON matching this schema:
   "reasoning": "string - your meteorological reasoning"
 }
 
-Use your knowledge of APAC seasonal patterns (monsoons, dry seasons, typhoon seasons) for the given region.`;
+Base your analysis on the actual weather data provided, not general knowledge.`;
 
 export async function runWeatherAgent(session: AgentSession): Promise<AgentFinding> {
   const { query } = session;
   const diseaseFindings = session.findings.find((f) => f.agentName === "CropDiseaseAgent");
+
+  const mcpCalls: McpToolCallEntry[] = [];
+
+  const weatherResult = await callTool("WeatherTool", {
+    region: query.region,
+    country: query.country,
+    cropType: query.cropType,
+  });
+  mcpCalls.push({
+    toolName: "WeatherTool",
+    params: { region: query.region, country: query.country, cropType: query.cropType },
+    success: weatherResult.success,
+    data: weatherResult.data,
+    error: weatherResult.error,
+    durationMs: weatherResult.durationMs,
+    timestamp: Date.now(),
+    calledBy: "WeatherAdaptationAgent",
+  });
+
+  const alertResult = await callTool("CropAlertTool", {
+    country: query.country,
+    cropType: query.cropType,
+  });
+  mcpCalls.push({
+    toolName: "CropAlertTool",
+    params: { country: query.country, cropType: query.cropType },
+    success: alertResult.success,
+    data: alertResult.data,
+    error: alertResult.error,
+    durationMs: alertResult.durationMs,
+    timestamp: Date.now(),
+    calledBy: "WeatherAdaptationAgent",
+  });
+
+  const weatherContext = weatherResult.success
+    ? `\n\nREAL WEATHER DATA (from Open-Meteo API):\n${JSON.stringify(weatherResult.data, null, 2)}`
+    : "\n\nWeather API unavailable — use seasonal knowledge for this region.";
+
+  const alertContext = alertResult.success
+    ? `\n\nACTIVE CROP ALERTS:\n${JSON.stringify(alertResult.data, null, 2)}`
+    : "";
 
   const userMessage = `Assess weather impact on this agricultural situation:
 - Crop: ${query.cropType}
@@ -31,8 +75,9 @@ export async function runWeatherAgent(session: AgentSession): Promise<AgentFindi
 - Symptoms observed: ${query.symptoms.join(", ")}
 ${diseaseFindings ? `- Preliminary diagnosis: ${diseaseFindings.summary}` : ""}
 - Original description: "${query.rawQuery}"
+${weatherContext}${alertContext}
 
-Consider the current month/season for this APAC region and how weather patterns affect this crop condition.`;
+Analyze how the actual weather conditions affect this crop condition and treatment timing.`;
 
   const response = await openai.chat.completions.create({
     model: AGENT_MODEL,
@@ -73,7 +118,7 @@ Consider the current month/season for this APAC region and how weather patterns 
       status: "error",
       confidence: 0.3,
       summary,
-      details: { weatherAssessment: assessment },
+      details: { weatherAssessment: assessment, mcpToolCalls: mcpCalls },
       reasoning,
     };
   }
@@ -83,7 +128,7 @@ Consider the current month/season for this APAC region and how weather patterns 
     status: "success",
     confidence: 0.8,
     summary,
-    details: { weatherAssessment: assessment },
+    details: { weatherAssessment: assessment, mcpToolCalls: mcpCalls },
     reasoning,
   };
 }
