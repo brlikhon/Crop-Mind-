@@ -283,6 +283,13 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
             action: "accepted",
             rationale: "Weather assessment completed successfully. Findings incorporated into treatment timing considerations.",
           });
+        } else {
+          decisions.push({
+            agentName: "WeatherAdaptationAgent",
+            action: "accepted",
+            rationale: `Weather assessment returned with status '${f.status}'. Partial findings may still be used but will not gate downstream agents.`,
+            details: { errorStatus: f.status },
+          });
         }
       })
     );
@@ -307,6 +314,13 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
             agentName: "MarketSubsidyAgent",
             action: "accepted",
             rationale: "Market intelligence completed successfully. Economic factors incorporated into recommendation.",
+          });
+        } else {
+          decisions.push({
+            agentName: "MarketSubsidyAgent",
+            action: "accepted",
+            rationale: `Market analysis returned with status '${f.status}'. Partial findings noted but economic factors may be incomplete.`,
+            details: { errorStatus: f.status },
           });
         }
       })
@@ -340,6 +354,13 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
         agentName: "TreatmentProtocolAgent",
         action: "accepted",
         rationale: "Treatment protocol synthesised from all available agent findings. Protocol accepted for final recommendation.",
+      });
+    } else {
+      decisions.push({
+        agentName: "TreatmentProtocolAgent",
+        action: "accepted",
+        rationale: `Treatment protocol returned with status '${treatmentFinding.status}'. Final recommendation will rely on diagnosis and other available findings.`,
+        details: { errorStatus: treatmentFinding.status },
       });
     }
   } else {
