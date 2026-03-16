@@ -49,6 +49,7 @@ export default function DiagnosePage() {
     setIsSynthesizing(false);
     setDiagnosisResult(null);
 
+    searchMutation.reset();
     searchMutation.mutate({ symptomsDescription: query, topK: 3 }, {
       onError: (err) => {
         console.error("Vector search failed:", err);
