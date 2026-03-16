@@ -237,6 +237,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ConflictResolution"
+        mcpToolCalls:
+          type: array
+          items:
+            $ref: "#/components/schemas/McpToolCallEntry"
         totalDurationMs:
           type: number
       required:
@@ -247,6 +251,7 @@ components:
         - traces
         - orchestratorDecisions
         - conflictResolutions
+        - mcpToolCalls
         - totalDurationMs
     FarmerQuery:
       type: object
@@ -450,6 +455,28 @@ components:
         - resolution
         - rationale
         - chosenAgent
+    McpToolCallEntry:
+      type: object
+      properties:
+        toolName:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+        calledBy:
+          type: string
+        success:
+          type: boolean
+        data: {}
+        error:
+          oneOf:
+            - type: string
+            - type: "null"
+      required:
+        - toolName
+        - params
+        - calledBy
+        - success
     McpToolListResponse:
       type: object
       properties:

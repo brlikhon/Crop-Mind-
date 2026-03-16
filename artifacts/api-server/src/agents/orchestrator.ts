@@ -10,6 +10,7 @@ import type {
   MarketIntelligence,
   TreatmentProtocol,
   McpToolCallEntry,
+  AgentTrace,
 } from "./types.js";
 import { createSession, runAgentWithTrace } from "./session.js";
 import { runCropDiseaseAgent } from "./crop-disease-agent.js";
