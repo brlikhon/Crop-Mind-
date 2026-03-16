@@ -6,6 +6,8 @@ const EMBEDDING_MODEL = "text-embedding-3-small";
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
 
+const STRICT_AI_MODE = process.env.EMBEDDING_STRICT_AI === "true";
+
 let _embeddingsApiAvailable: boolean | null = null;
 let _embeddingMode: "ai" | "deterministic" = "deterministic";
 
@@ -29,12 +31,24 @@ async function checkEmbeddingsApi(): Promise<boolean> {
   } catch {
     _embeddingsApiAvailable = false;
     _embeddingMode = "deterministic";
-    console.warn(`[embedding] OpenAI embeddings API endpoint not supported — falling back to deterministic text-hash embeddings (word + trigram → ${EMBEDDING_DIMENSIONS}-dim). This is expected when the Replit AI Integrations proxy does not expose POST /embeddings.`);
+    if (STRICT_AI_MODE) {
+      throw new Error(
+        `[embedding] FATAL: OpenAI embeddings API not available and EMBEDDING_STRICT_AI=true. ` +
+        `The Replit AI Integrations proxy does not expose POST /embeddings. ` +
+        `Set EMBEDDING_STRICT_AI=false or provide a direct OpenAI API key to use deterministic fallback.`
+      );
+    }
+    console.warn(
+      `[embedding] OpenAI embeddings API endpoint not supported by Replit AI Integrations proxy. ` +
+      `Using deterministic text-hash embeddings (word + trigram → ${EMBEDDING_DIMENSIONS}-dim). ` +
+      `Set EMBEDDING_STRICT_AI=true to enforce AI-only mode and fail on unavailability.`
+    );
   }
   return false;
 }
 
-async function callEmbeddingsApiWithRetry(text: string): Promise<number[] | null> {
+async function callEmbeddingsApiWithRetry(text: string): Promise<number[]> {
+  let lastError: unknown;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       const response = await openai.embeddings.create({
@@ -43,6 +57,7 @@ async function callEmbeddingsApiWithRetry(text: string): Promise<number[] | null
       });
       return response.data[0].embedding;
     } catch (err: unknown) {
+      lastError = err;
       const status = (err as { status?: number }).status;
       if (status === 429 || (status !== undefined && status >= 500)) {
         const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
@@ -51,20 +66,18 @@ async function callEmbeddingsApiWithRetry(text: string): Promise<number[] | null
         await new Promise((resolve) => setTimeout(resolve, backoff + jitter));
         continue;
       }
-      return null;
+      throw new Error(`[embedding] Non-retryable error from embeddings API: ${(err as Error).message}`);
     }
   }
-  return null;
+  throw new Error(`[embedding] Exhausted ${MAX_RETRIES} retries for embeddings API: ${(lastError as Error).message}`);
 }
 
 export async function generateEmbeddingAsync(text: string): Promise<number[]> {
   const apiAvailable = await checkEmbeddingsApi();
   if (apiAvailable) {
     const result = await callEmbeddingsApiWithRetry(text);
-    if (result) {
-      if (result.length === EMBEDDING_DIMENSIONS) return result;
-      return padOrTruncate(result, EMBEDDING_DIMENSIONS);
-    }
+    if (result.length === EMBEDDING_DIMENSIONS) return result;
+    return padOrTruncate(result, EMBEDDING_DIMENSIONS);
   }
   return generateEmbedding(text);
 }
