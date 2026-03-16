@@ -1,6 +1,15 @@
 import { pool } from "./src/index.js";
+import { generateEmbeddingAsync, buildCaseText, getEmbeddingMode, EMBEDDING_DIMENSIONS } from "../../artifacts/api-server/src/vectors/embedding.js";
 
-const DIMENSIONS = 1536;
+interface CaseTemplate {
+  cropType: string;
+  country: string;
+  region: string;
+  symptoms: string;
+  diagnosis: string;
+  treatment: string;
+  outcomeRange: [number, number];
+}
 
 function hashCode(str: string): number {
   let hash = 0;
@@ -20,44 +29,6 @@ function mulberry32(seed: number): () => number {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-}
-
-function generateEmbedding(text: string): number[] {
-  const normalized = text.toLowerCase().trim();
-  const vec = new Float64Array(DIMENSIONS);
-  const words = normalized.split(/\s+/).filter(Boolean);
-  for (const word of words) {
-    const wordSeed = hashCode(word);
-    const rng = mulberry32(wordSeed);
-    for (let d = 0; d < DIMENSIONS; d++) {
-      vec[d] += rng() * 2 - 1;
-    }
-  }
-  for (let i = 0; i < normalized.length - 2; i++) {
-    const trigram = normalized.substring(i, i + 3);
-    const triSeed = hashCode(trigram);
-    const idx = Math.abs(triSeed) % DIMENSIONS;
-    vec[idx] += 0.5;
-  }
-  let magnitude = 0;
-  for (let d = 0; d < DIMENSIONS; d++) magnitude += vec[d] * vec[d];
-  magnitude = Math.sqrt(magnitude);
-  if (magnitude === 0) return Array(DIMENSIONS).fill(1 / Math.sqrt(DIMENSIONS));
-  return Array.from(vec).map((v) => v / magnitude);
-}
-
-function buildCaseText(c: { cropType: string; country: string; region: string; symptoms: string; diagnosis: string; treatment: string }) {
-  return `crop: ${c.cropType}. region: ${c.region}, ${c.country}. symptoms: ${c.symptoms}. diagnosis: ${c.diagnosis}. treatment: ${c.treatment}`;
-}
-
-interface CaseTemplate {
-  cropType: string;
-  country: string;
-  region: string;
-  symptoms: string;
-  diagnosis: string;
-  treatment: string;
-  outcomeRange: [number, number];
 }
 
 const templates: CaseTemplate[] = [
@@ -144,12 +115,17 @@ function generateVariant(template: CaseTemplate, variantIdx: number) {
     treatmentApplied: template.treatment,
     outcomeScore,
     resolvedAt,
-    embedding: generateEmbedding(caseText),
+    caseText,
   };
 }
 
 async function seed() {
   console.log("Seeding crop cases with vector embeddings...");
+  console.log(`Embedding dimensions: ${EMBEDDING_DIMENSIONS}`);
+
+  const firstEmbedding = await generateEmbeddingAsync("probe for embedding mode");
+  console.log(`Embedding mode: ${getEmbeddingMode()} (vector length: ${firstEmbedding.length})`);
+
   const client = await pool.connect();
 
   try {
@@ -164,7 +140,9 @@ async function seed() {
         const globalIdx = tIdx * casesPerTemplate + v;
         const c = generateVariant(template, globalIdx);
 
-        const vecStr = `[${c.embedding.join(",")}]`;
+        const embedding = await generateEmbeddingAsync(c.caseText);
+        const vecStr = `[${embedding.join(",")}]`;
+
         await client.query(
           `INSERT INTO crop_cases (case_id, crop_type, country, region, symptoms_text, diagnosis, treatment_applied, outcome_score, resolved_at, embedding)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,

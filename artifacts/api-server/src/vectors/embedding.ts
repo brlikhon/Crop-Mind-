@@ -7,6 +7,11 @@ const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
 
 let _embeddingsApiAvailable: boolean | null = null;
+let _embeddingMode: "ai" | "deterministic" = "deterministic";
+
+export function getEmbeddingMode(): "ai" | "deterministic" {
+  return _embeddingMode;
+}
 
 async function checkEmbeddingsApi(): Promise<boolean> {
   if (_embeddingsApiAvailable !== null) return _embeddingsApiAvailable;
@@ -17,12 +22,14 @@ async function checkEmbeddingsApi(): Promise<boolean> {
     });
     if (response.data?.[0]?.embedding?.length > 0) {
       _embeddingsApiAvailable = true;
+      _embeddingMode = "ai";
       console.log(`[embedding] OpenAI embeddings API available (${EMBEDDING_MODEL}, dim=${response.data[0].embedding.length})`);
       return true;
     }
   } catch {
     _embeddingsApiAvailable = false;
-    console.log(`[embedding] OpenAI embeddings API not available — using deterministic text-hash embeddings`);
+    _embeddingMode = "deterministic";
+    console.warn(`[embedding] OpenAI embeddings API endpoint not supported — falling back to deterministic text-hash embeddings (word + trigram → ${EMBEDDING_DIMENSIONS}-dim). This is expected when the Replit AI Integrations proxy does not expose POST /embeddings.`);
   }
   return false;
 }
