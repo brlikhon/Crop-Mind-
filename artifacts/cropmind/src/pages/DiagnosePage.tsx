@@ -1,30 +1,53 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { DiagnosticForm } from "@/components/DiagnosticForm";
 import { AgentVisualizer } from "@/components/AgentVisualizer";
 import { ResultsDashboard } from "@/components/ResultsDashboard";
-import { useDiagnoseCrop, useSearchCases } from "@/hooks/use-api";
+import { streamDiagnose, useSearchCases, type DiagnoseResponse, type AgentTrace, type McpToolCallEntry, type StreamEvent } from "@/hooks/use-api";
 import { useToast } from "@/hooks/use-toast";
 
 export default function DiagnosePage() {
   const { toast } = useToast();
-  const diagnoseMutation = useDiagnoseCrop();
   const searchMutation = useSearchCases();
 
   const [hasStarted, setHasStarted] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [liveTraces, setLiveTraces] = useState<AgentTrace[]>([]);
+  const [activeAgents, setActiveAgents] = useState<string[]>([]);
+  const [liveMcpCalls, setLiveMcpCalls] = useState<McpToolCallEntry[]>([]);
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [diagnosisResult, setDiagnosisResult] = useState<DiagnoseResponse | null>(null);
 
-  const handleDiagnose = (query: string) => {
+  const handleStreamEvent = useCallback((event: StreamEvent) => {
+    switch (event.type) {
+      case "agent_started":
+        setActiveAgents(prev => [...prev, event.agentName]);
+        break;
+      case "agent_completed":
+        setActiveAgents(prev => prev.filter(a => a !== event.agentName));
+        setLiveTraces(prev => [...prev, event.trace]);
+        break;
+      case "mcp_tool_call":
+        setLiveMcpCalls(prev => [...prev, event.call]);
+        break;
+      case "synthesis_started":
+        setIsSynthesizing(true);
+        break;
+      case "complete":
+        setDiagnosisResult(event.result);
+        setIsStreaming(false);
+        setIsSynthesizing(false);
+        break;
+    }
+  }, []);
+
+  const handleDiagnose = async (query: string) => {
     setHasStarted(true);
-
-    diagnoseMutation.mutate({ query }, {
-      onError: (err) => {
-        toast({
-          title: "Diagnosis Failed",
-          description: err.message,
-          variant: "destructive",
-        });
-        setHasStarted(false);
-      }
-    });
+    setIsStreaming(true);
+    setLiveTraces([]);
+    setActiveAgents([]);
+    setLiveMcpCalls([]);
+    setIsSynthesizing(false);
+    setDiagnosisResult(null);
 
     searchMutation.mutate({ symptomsDescription: query, topK: 3 }, {
       onError: (err) => {
@@ -36,10 +59,32 @@ export default function DiagnosePage() {
         });
       }
     });
+
+    try {
+      await streamDiagnose(query, {
+        onEvent: handleStreamEvent,
+        onError: (err) => {
+          toast({
+            title: "Diagnosis Failed",
+            description: err.message,
+            variant: "destructive",
+          });
+          setIsStreaming(false);
+          setHasStarted(false);
+        },
+      });
+    } catch (err) {
+      toast({
+        title: "Diagnosis Failed",
+        description: err instanceof Error ? err.message : "An error occurred",
+        variant: "destructive",
+      });
+      setIsStreaming(false);
+      setHasStarted(false);
+    }
   };
 
-  const isPending = diagnoseMutation.isPending;
-  const diagnosisData = diagnoseMutation.data;
+  const isPending = isStreaming;
 
   return (
     <div className="w-full flex flex-col items-center pb-24">
@@ -47,22 +92,28 @@ export default function DiagnosePage() {
         <DiagnosticForm onSubmit={handleDiagnose} isPending={isPending} />
       </div>
 
-      {isPending && (
+      {(isPending || (liveTraces.length > 0 && !diagnosisResult)) && (
         <AgentVisualizer
-          traces={[]}
-          isLoading={true}
+          traces={liveTraces}
+          activeAgents={activeAgents}
+          mcpCalls={liveMcpCalls}
+          isSynthesizing={isSynthesizing}
+          isLoading={isPending}
         />
       )}
 
-      {!isPending && diagnosisData && (
+      {diagnosisResult && (
         <>
           <AgentVisualizer
-            traces={diagnosisData.traces}
+            traces={diagnosisResult.traces}
+            activeAgents={[]}
+            mcpCalls={diagnosisResult.mcpToolCalls}
+            isSynthesizing={false}
             isLoading={false}
-            totalDurationMs={diagnosisData.totalDurationMs}
+            totalDurationMs={diagnosisResult.totalDurationMs}
           />
           <ResultsDashboard
-            diagnosis={diagnosisData}
+            diagnosis={diagnosisResult}
             cases={searchMutation.data}
           />
         </>

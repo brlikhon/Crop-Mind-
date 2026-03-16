@@ -228,7 +228,15 @@ Structure your response as a single coherent paragraph (3-5 sentences) that:
 
 Write at a level that any farmer can understand. Be direct and practical.`;
 
-export async function runOrchestrator(rawQuery: string): Promise<OrchestratorResult> {
+export type OrchestratorEvent =
+  | { type: "agent_started"; agentName: string }
+  | { type: "agent_completed"; agentName: string; trace: AgentTrace }
+  | { type: "mcp_tool_call"; call: McpToolCallEntry }
+  | { type: "synthesis_started" }
+  | { type: "complete"; result: OrchestratorResult };
+
+export async function runOrchestrator(rawQuery: string, onEvent?: (event: OrchestratorEvent) => void): Promise<OrchestratorResult> {
+  const emit = onEvent ?? (() => {});
   const startTime = Date.now();
   const decisions: OrchestratorDecision[] = [];
 
@@ -248,7 +256,9 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
     action: "invoked",
     rationale: "CropDiseaseAgent is always invoked as the primary diagnostic agent — it provides the foundation for all other agent decisions.",
   });
+  emit({ type: "agent_started", agentName: "CropDiseaseAgent" });
   const diseaseFinding = await runAgentWithTrace(session, "CropDiseaseAgent", runCropDiseaseAgent);
+  emit({ type: "agent_completed", agentName: "CropDiseaseAgent", trace: session.traces[session.traces.length - 1] });
 
   const diagnosisSucceeded = diseaseFinding.status === "success";
   if (diagnosisSucceeded) {
@@ -277,8 +287,12 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
       action: "invoked",
       rationale: weatherDecision.rationale,
     });
+    emit({ type: "agent_started", agentName: "WeatherAdaptationAgent" });
     parallelTasks.push(
       runAgentWithTrace(session, "WeatherAdaptationAgent", runWeatherAgent).then((f) => {
+        emit({ type: "agent_completed", agentName: "WeatherAdaptationAgent", trace: session.traces.find(t => t.agentName === "WeatherAdaptationAgent")! });
+        const mcpCalls = (f.details?.mcpToolCalls as McpToolCallEntry[]) ?? [];
+        mcpCalls.forEach(c => emit({ type: "mcp_tool_call", call: c }));
         if (f.status === "success") {
           decisions.push({
             agentName: "WeatherAdaptationAgent",
@@ -309,8 +323,12 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
       action: "invoked",
       rationale: marketDecision.rationale,
     });
+    emit({ type: "agent_started", agentName: "MarketSubsidyAgent" });
     parallelTasks.push(
       runAgentWithTrace(session, "MarketSubsidyAgent", runMarketAgent).then((f) => {
+        emit({ type: "agent_completed", agentName: "MarketSubsidyAgent", trace: session.traces.find(t => t.agentName === "MarketSubsidyAgent")! });
+        const mcpCalls = (f.details?.mcpToolCalls as McpToolCallEntry[]) ?? [];
+        mcpCalls.forEach(c => emit({ type: "mcp_tool_call", call: c }));
         if (f.status === "success") {
           decisions.push({
             agentName: "MarketSubsidyAgent",
@@ -350,7 +368,9 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
       action: "invoked",
       rationale: treatmentDecision.rationale,
     });
+    emit({ type: "agent_started", agentName: "TreatmentProtocolAgent" });
     const treatmentFinding = await runAgentWithTrace(session, "TreatmentProtocolAgent", runTreatmentAgent);
+    emit({ type: "agent_completed", agentName: "TreatmentProtocolAgent", trace: session.traces.find(t => t.agentName === "TreatmentProtocolAgent")! });
     if (treatmentFinding.status === "success") {
       decisions.push({
         agentName: "TreatmentProtocolAgent",
@@ -384,6 +404,8 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
   const conflictsSummary = conflictResolutions.length > 0
     ? "\n\nConflict Resolutions:\n" + conflictResolutions.map((c) => `- ${c.conflictType}: ${c.resolution}`).join("\n")
     : "";
+
+  emit({ type: "synthesis_started" });
 
   const synthesisResponse = await openai.chat.completions.create({
     model: AGENT_MODEL,
@@ -452,6 +474,8 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
   if (treatmentFindingRef?.status === "success" && treatmentFindingRef.details?.treatmentProtocol) {
     result.treatmentProtocol = treatmentFindingRef.details.treatmentProtocol as TreatmentProtocol;
   }
+
+  emit({ type: "complete", result });
 
   return result;
 }

@@ -118,7 +118,19 @@ export interface McpToolSchema {
   params: any[];
 }
 
-// --- Hooks ---
+export type StreamEvent =
+  | { type: "agent_started"; agentName: string }
+  | { type: "agent_completed"; agentName: string; trace: AgentTrace }
+  | { type: "mcp_tool_call"; call: McpToolCallEntry }
+  | { type: "synthesis_started" }
+  | { type: "complete"; result: DiagnoseResponse }
+  | { type: "error"; message: string };
+
+export interface StreamCallbacks {
+  onEvent?: (event: StreamEvent) => void;
+  onComplete?: (result: DiagnoseResponse) => void;
+  onError?: (error: Error) => void;
+}
 
 export function useDiagnoseCrop() {
   return useMutation({
@@ -136,6 +148,56 @@ export function useDiagnoseCrop() {
       return res.json();
     },
   });
+}
+
+export async function streamDiagnose(
+  query: string,
+  callbacks: StreamCallbacks
+): Promise<DiagnoseResponse | null> {
+  const res = await fetch("/api/cropagent/diagnose/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Failed to diagnose" }));
+    throw new Error(err.error || "Failed to diagnose");
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("No response body");
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finalResult: DiagnoseResponse | null = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (payload === "[DONE]") continue;
+      try {
+        const event = JSON.parse(payload) as StreamEvent;
+        callbacks.onEvent?.(event);
+        if (event.type === "complete") {
+          finalResult = event.result;
+          callbacks.onComplete?.(event.result);
+        }
+      } catch {
+        // skip malformed events
+      }
+    }
+  }
+
+  return finalResult;
 }
 
 export function useSearchCases() {

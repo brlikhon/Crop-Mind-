@@ -51,11 +51,13 @@ function McpToolCallCard({ call }: { call: McpToolCallEntry }) {
           <span className="text-foreground/50">params: </span>
           {JSON.stringify(call.params)}
         </div>
-        {call.success && call.data && (
+        {call.success && call.data != null && (
           <div className="bg-muted/50 rounded p-2 font-mono text-[10px] mt-1 max-h-20 overflow-y-auto break-all">
             <span className="text-foreground/50">result: </span>
-            {typeof call.data === "string" ? call.data : JSON.stringify(call.data).substring(0, 200)}
-            {JSON.stringify(call.data).length > 200 ? "..." : ""}
+            {(() => {
+              const str = typeof call.data === "string" ? call.data : JSON.stringify(call.data);
+              return str.length > 200 ? str.substring(0, 200) + "..." : str;
+            })()}
           </div>
         )}
       </div>
