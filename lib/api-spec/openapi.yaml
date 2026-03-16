@@ -14,6 +14,8 @@ tags:
     description: Multi-agent crop intelligence operations
   - name: mcp
     description: MCP tool server operations
+  - name: cases
+    description: Vector case intelligence operations
 paths:
   /healthz:
     get:
@@ -115,6 +117,68 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/McpToolResult"
+  /cases/search:
+    post:
+      operationId: searchCases
+      tags: [cases]
+      summary: Vector similarity search over historical crop cases
+      description: Accepts a symptom description, generates its embedding, runs pgvector cosine similarity search with optional filters, and returns the top results re-ranked by combining semantic similarity with treatment success rate.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseSearchRequest"
+      responses:
+        "200":
+          description: Similar historical cases found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseSearchResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /cases/submit:
+    post:
+      operationId: submitCase
+      tags: [cases]
+      summary: Submit a resolved crop case to the vector store
+      description: Adds a new resolved case with its embedding to the vector knowledge base. This closes the learning loop — new farmer outcomes improve future recommendations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseSubmitRequest"
+      responses:
+        "201":
+          description: Case submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseSubmitResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -463,6 +527,127 @@ components:
         - success
         - data
         - durationMs
+    CaseSearchRequest:
+      type: object
+      properties:
+        symptomsDescription:
+          type: string
+          description: Natural language description of the crop symptoms to search for similar historical cases
+          minLength: 1
+        cropType:
+          type: string
+          description: Optional filter by crop type
+        country:
+          type: string
+          description: Optional filter by country
+        topK:
+          type: number
+          description: Number of results to return (default 5, max 20)
+      required:
+        - symptomsDescription
+    CaseSearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        filters:
+          type: object
+          properties:
+            cropType:
+              type: string
+            country:
+              type: string
+        candidatesFound:
+          type: number
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SimilarCase"
+        durationMs:
+          type: number
+      required:
+        - query
+        - filters
+        - candidatesFound
+        - results
+        - durationMs
+    SimilarCase:
+      type: object
+      properties:
+        caseId:
+          type: string
+        cropType:
+          type: string
+        country:
+          type: string
+        region:
+          type: string
+        symptomsText:
+          type: string
+        diagnosis:
+          type: string
+        treatmentApplied:
+          type: string
+        outcomeScore:
+          type: number
+        resolvedAt:
+          type: string
+        similarityScore:
+          type: number
+        weightedScore:
+          type: number
+      required:
+        - caseId
+        - cropType
+        - country
+        - region
+        - symptomsText
+        - diagnosis
+        - treatmentApplied
+        - outcomeScore
+        - resolvedAt
+        - similarityScore
+        - weightedScore
+    CaseSubmitRequest:
+      type: object
+      properties:
+        cropType:
+          type: string
+        country:
+          type: string
+        region:
+          type: string
+        symptomsText:
+          type: string
+        diagnosis:
+          type: string
+        treatmentApplied:
+          type: string
+        outcomeScore:
+          type: number
+          minimum: 0
+          maximum: 1
+      required:
+        - cropType
+        - country
+        - region
+        - symptomsText
+        - diagnosis
+        - treatmentApplied
+        - outcomeScore
+    CaseSubmitResponse:
+      type: object
+      properties:
+        caseId:
+          type: string
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - caseId
+        - success
+        - message
     ErrorResponse:
       type: object
       properties:
