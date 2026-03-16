@@ -92,6 +92,35 @@ export interface AgentTrace {
   output: AgentFinding;
 }
 
+export type OrchestratorDecisionAction =
+  (typeof OrchestratorDecisionAction)[keyof typeof OrchestratorDecisionAction];
+
+export const OrchestratorDecisionAction = {
+  invoked: "invoked",
+  skipped: "skipped",
+  accepted: "accepted",
+  overridden: "overridden",
+  conflict_resolved: "conflict_resolved",
+} as const;
+
+export type OrchestratorDecisionDetails = { [key: string]: unknown };
+
+export interface OrchestratorDecision {
+  agentName: string;
+  action: OrchestratorDecisionAction;
+  rationale: string;
+  details?: OrchestratorDecisionDetails;
+}
+
+export interface ConflictResolution {
+  conflictType: string;
+  agentA: string;
+  agentB: string;
+  resolution: string;
+  rationale: string;
+  chosenAgent: string;
+}
+
 export interface DiagnoseResponse {
   sessionId: string;
   query: FarmerQuery;
@@ -102,6 +131,8 @@ export interface DiagnoseResponse {
   finalRecommendation: string;
   confidenceScore: number;
   traces: AgentTrace[];
+  orchestratorDecisions: OrchestratorDecision[];
+  conflictResolutions: ConflictResolution[];
   totalDurationMs: number;
 }
 

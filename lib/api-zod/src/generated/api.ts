@@ -108,5 +108,29 @@ export const DiagnoseCropResponse = zod.object({
       }),
     }),
   ),
+  orchestratorDecisions: zod.array(
+    zod.object({
+      agentName: zod.string(),
+      action: zod.enum([
+        "invoked",
+        "skipped",
+        "accepted",
+        "overridden",
+        "conflict_resolved",
+      ]),
+      rationale: zod.string(),
+      details: zod.object({}).passthrough().optional(),
+    }),
+  ),
+  conflictResolutions: zod.array(
+    zod.object({
+      conflictType: zod.string(),
+      agentA: zod.string(),
+      agentB: zod.string(),
+      resolution: zod.string(),
+      rationale: zod.string(),
+      chosenAgent: zod.string(),
+    }),
+  ),
   totalDurationMs: zod.number(),
 });

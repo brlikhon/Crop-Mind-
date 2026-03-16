@@ -6,9 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AgentTrace } from "./agentTrace";
+import type { ConflictResolution } from "./conflictResolution";
 import type { DiagnosisResult } from "./diagnosisResult";
 import type { FarmerQuery } from "./farmerQuery";
 import type { MarketIntelligence } from "./marketIntelligence";
+import type { OrchestratorDecision } from "./orchestratorDecision";
 import type { TreatmentProtocol } from "./treatmentProtocol";
 import type { WeatherAssessment } from "./weatherAssessment";
 
@@ -22,5 +24,7 @@ export interface DiagnoseResponse {
   finalRecommendation: string;
   confidenceScore: number;
   traces: AgentTrace[];
+  orchestratorDecisions: OrchestratorDecision[];
+  conflictResolutions: ConflictResolution[];
   totalDurationMs: number;
 }

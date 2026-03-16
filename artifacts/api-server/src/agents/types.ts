@@ -65,6 +65,22 @@ export interface TreatmentProtocol {
   localResources: string[];
 }
 
+export interface OrchestratorDecision {
+  agentName: string;
+  action: "invoked" | "skipped" | "accepted" | "overridden" | "conflict_resolved";
+  rationale: string;
+  details?: Record<string, unknown>;
+}
+
+export interface ConflictResolution {
+  conflictType: string;
+  agentA: string;
+  agentB: string;
+  resolution: string;
+  rationale: string;
+  chosenAgent: string;
+}
+
 export interface OrchestratorResult {
   sessionId: string;
   query: FarmerQuery;
@@ -75,5 +91,7 @@ export interface OrchestratorResult {
   finalRecommendation: string;
   confidenceScore: number;
   traces: AgentTrace[];
+  orchestratorDecisions: OrchestratorDecision[];
+  conflictResolutions: ConflictResolution[];
   totalDurationMs: number;
 }

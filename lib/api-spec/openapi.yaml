@@ -107,6 +107,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AgentTrace"
+        orchestratorDecisions:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrchestratorDecision"
+        conflictResolutions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConflictResolution"
         totalDurationMs:
           type: number
       required:
@@ -115,6 +123,8 @@ components:
         - finalRecommendation
         - confidenceScore
         - traces
+        - orchestratorDecisions
+        - conflictResolutions
         - totalDurationMs
     FarmerQuery:
       type: object
@@ -275,6 +285,49 @@ components:
         - summary
         - details
         - reasoning
+    OrchestratorDecision:
+      type: object
+      properties:
+        agentName:
+          type: string
+        action:
+          type: string
+          enum:
+            - invoked
+            - skipped
+            - accepted
+            - overridden
+            - conflict_resolved
+        rationale:
+          type: string
+        details:
+          type: object
+      required:
+        - agentName
+        - action
+        - rationale
+    ConflictResolution:
+      type: object
+      properties:
+        conflictType:
+          type: string
+        agentA:
+          type: string
+        agentB:
+          type: string
+        resolution:
+          type: string
+        rationale:
+          type: string
+        chosenAgent:
+          type: string
+      required:
+        - conflictType
+        - agentA
+        - agentB
+        - resolution
+        - rationale
+        - chosenAgent
     ErrorResponse:
       type: object
       properties:
