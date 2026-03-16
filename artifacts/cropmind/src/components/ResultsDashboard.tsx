@@ -3,8 +3,9 @@ import {
   type DiagnoseResponse,
   type CaseSearchResponse,
   type McpToolCallEntry,
+  type AgentTrace,
 } from "@/hooks/use-api";
-import { Check, AlertTriangle, MapPin, Activity, Cpu, Database, Droplets, Server, TrendingUp, Clock } from "lucide-react";
+import { Check, AlertTriangle, MapPin, Activity, Cpu, Database, Droplets, Server, TrendingUp, Clock, ShieldCheck, Bug, Leaf } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -40,9 +41,11 @@ function McpToolCallCard({ call }: { call: McpToolCallEntry }) {
           )}>
             {call.success ? "OK" : "ERR"}
           </span>
-          <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-            <Clock className="w-2.5 h-2.5" />{call.durationMs}ms
-          </span>
+          {call.durationMs != null && (
+            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+              <Clock className="w-2.5 h-2.5" />{call.durationMs}ms
+            </span>
+          )}
         </div>
       </div>
       <div className="text-[11px] text-muted-foreground">
@@ -66,92 +69,144 @@ function McpToolCallCard({ call }: { call: McpToolCallEntry }) {
 }
 
 function FinalRecommendationCard({ data }: { data: DiagnoseResponse }) {
+  const diagTrace = data.traces.find(t => t.agentName === "CropDiseaseAgent");
+  const diagDetails = diagTrace?.output?.details as Record<string, unknown> | undefined;
+  const diagnosisInfo = diagDetails?.diagnosis as Record<string, unknown> | undefined;
+  const primaryDiagnosis = diagnosisInfo?.primaryDiagnosis as string | undefined;
+
+  const treatTrace = data.traces.find(t => t.agentName === "TreatmentProtocolAgent");
+  const treatDetails = treatTrace?.output?.details as Record<string, unknown> | undefined;
+  const preventiveMeasures = (treatDetails?.preventiveMeasures ?? data.treatmentProtocol?.preventiveMeasures) as string[] | string | undefined;
+
   return (
     <div className="col-span-full mt-8 bg-gradient-to-br from-primary to-primary/90 rounded-3xl p-8 shadow-2xl text-primary-foreground relative overflow-hidden">
       <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-              <Activity className="w-6 h-6 text-white" />
+      <div className="relative z-10 flex flex-col gap-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+            <Activity className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold">Unified Action Plan</h2>
+          <div className="ml-auto">
+            <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
+              Confidence: {Math.round(data.confidenceScore * 100)}%
+            </span>
+          </div>
+        </div>
+
+        {primaryDiagnosis && (
+          <div className="bg-black/20 rounded-2xl p-5 backdrop-blur-md flex items-start gap-4">
+            <div className="p-2 bg-white/15 rounded-lg">
+              <Bug className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-2xl font-bold">Unified Action Plan</h2>
-            <div className="ml-auto">
-              <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
-                Confidence: {Math.round(data.confidenceScore * 100)}%
-              </span>
+            <div>
+              <h4 className="font-bold text-sm text-white/70 uppercase tracking-wider mb-1">Primary Diagnosis</h4>
+              <p className="text-lg font-semibold text-white">{primaryDiagnosis}</p>
             </div>
           </div>
+        )}
 
-          <p className="text-lg md:text-xl font-medium leading-relaxed text-white/90 mb-6">
-            {data.finalRecommendation}
-          </p>
+        <p className="text-lg md:text-xl font-medium leading-relaxed text-white/90">
+          {data.finalRecommendation}
+        </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-            {data.treatmentProtocol && (
-              <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-md">
-                <h4 className="font-bold text-white mb-4 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-secondary" />
-                  Immediate Actions
-                </h4>
-                <ul className="space-y-3">
-                  {data.treatmentProtocol.immediateActions.map((action, i) => (
-                    <li key={i} className="flex gap-3 text-sm text-white/80">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xs font-bold">
-                        {i + 1}
-                      </span>
-                      <span>{action}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {data.treatmentProtocol && (
+            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-md">
+              <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                <Check className="w-4 h-4 text-secondary" />
+                Immediate Actions
+              </h4>
+              <ul className="space-y-3">
+                {data.treatmentProtocol.immediateActions.map((action, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-white/80">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xs font-bold">
+                      {i + 1}
+                    </span>
+                    <span>{action}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-            {data.marketIntelligence && (
-              <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-md">
-                <h4 className="font-bold text-white mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-secondary" />
-                  Economic Outlook
-                </h4>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-xs text-white/60 uppercase tracking-wider mb-1">Current Price</p>
-                    <p className="text-lg font-semibold">{data.marketIntelligence.currentPrice}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-white/60 uppercase tracking-wider mb-1">Recommendation</p>
-                    <p className="text-sm text-white/80">{data.marketIntelligence.recommendation}</p>
-                  </div>
-                  {data.marketIntelligence.availableSubsidies?.length > 0 && (
-                     <div className="pt-2">
-                       <p className="text-xs text-secondary font-bold uppercase tracking-wider mb-2">Available Subsidies</p>
-                       <div className="flex flex-wrap gap-2">
-                         {data.marketIntelligence.availableSubsidies.map((sub, i) => (
-                           <span key={i} className="bg-white/10 px-2 py-1 rounded text-xs border border-white/20">
-                             {sub}
-                           </span>
-                         ))}
-                       </div>
-                     </div>
-                  )}
+          {preventiveMeasures && (
+            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-md">
+              <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-secondary" />
+                Preventive Measures
+              </h4>
+              <ul className="space-y-3">
+                {(Array.isArray(preventiveMeasures) ? preventiveMeasures : [preventiveMeasures]).map((measure, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-white/80">
+                    <Leaf className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5" />
+                    <span>{measure}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {data.marketIntelligence && (
+            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-md">
+              <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-secondary" />
+                Economic Outlook
+              </h4>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs text-white/60 uppercase tracking-wider mb-1">Current Price</p>
+                  <p className="text-lg font-semibold">{data.marketIntelligence.currentPrice}</p>
                 </div>
+                <div>
+                  <p className="text-xs text-white/60 uppercase tracking-wider mb-1">Recommendation</p>
+                  <p className="text-sm text-white/80">{data.marketIntelligence.recommendation}</p>
+                </div>
+                {data.marketIntelligence.availableSubsidies?.length > 0 && (
+                   <div className="pt-2">
+                     <p className="text-xs text-secondary font-bold uppercase tracking-wider mb-2">Available Subsidies</p>
+                     <div className="flex flex-wrap gap-2">
+                       {data.marketIntelligence.availableSubsidies.map((sub, i) => (
+                         <span key={i} className="bg-white/10 px-2 py-1 rounded text-xs border border-white/20">
+                           {sub}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
+interface ResultsDashboardProps {
+  diagnosis?: DiagnoseResponse | null;
+  cases?: CaseSearchResponse;
+  liveTraces?: AgentTrace[];
+  liveMcpCalls?: McpToolCallEntry[];
+  isStreaming?: boolean;
+}
+
 export function ResultsDashboard({
   diagnosis,
-  cases
-}: {
-  diagnosis: DiagnoseResponse,
-  cases?: CaseSearchResponse
-}) {
+  cases,
+  liveTraces = [],
+  liveMcpCalls = [],
+  isStreaming = false,
+}: ResultsDashboardProps) {
+  const traces = diagnosis?.traces ?? liveTraces;
+  const mcpCalls = diagnosis?.mcpToolCalls ?? liveMcpCalls;
+  const hasTraces = traces.length > 0;
+  const hasMcpCalls = mcpCalls.length > 0;
+  const showPanels = hasTraces || hasMcpCalls || isStreaming;
+
+  if (!showPanels) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -164,36 +219,53 @@ export function ResultsDashboard({
           <div className="p-4 border-b bg-muted/30 flex items-center gap-2">
             <Cpu className="w-5 h-5 text-primary" />
             <h3 className="font-bold">Agent Reasoning</h3>
+            {hasTraces && (
+              <span className="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-md border ml-auto">
+                {traces.length} agents
+              </span>
+            )}
           </div>
           <div className="p-4 flex-1 overflow-y-auto space-y-4">
-            {diagnosis.traces.map((trace, idx) => (
-              <div key={idx} className="border rounded-xl p-4 hover:border-primary/30 transition-colors bg-background/50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-sm text-foreground">{trace.agentName}</span>
-                  <span className={cn(
-                    "text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider",
-                    trace.output.status === 'success' ? "bg-success/10 text-success" :
-                    trace.output.status === 'skipped' ? "bg-muted text-muted-foreground" :
-                    "bg-destructive/10 text-destructive"
-                  )}>
-                    {trace.output.status}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">{trace.output.summary}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="w-3 h-3" />
-                  <span>{trace.durationMs}ms</span>
-                </div>
-                {trace.output.confidence > 0 && (
-                  <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-2">
-                    <div
-                      className="bg-primary h-full rounded-full"
-                      style={{ width: `${trace.output.confidence * 100}%` }}
-                    />
-                  </div>
-                )}
+            {traces.length === 0 && isStreaming ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground text-sm flex-col gap-2 min-h-[100px]">
+                <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                Agents analyzing...
               </div>
-            ))}
+            ) : (
+              traces.map((trace, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="border rounded-xl p-4 hover:border-primary/30 transition-colors bg-background/50"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-sm text-foreground">{trace.agentName}</span>
+                    <span className={cn(
+                      "text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider",
+                      trace.output.status === 'success' ? "bg-success/10 text-success" :
+                      trace.output.status === 'skipped' ? "bg-muted text-muted-foreground" :
+                      "bg-destructive/10 text-destructive"
+                    )}>
+                      {trace.output.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">{trace.output.summary}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3" />
+                    <span>{trace.durationMs}ms</span>
+                  </div>
+                  {trace.output.confidence > 0 && (
+                    <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-2">
+                      <div
+                        className="bg-primary h-full rounded-full"
+                        style={{ width: `${trace.output.confidence * 100}%` }}
+                      />
+                    </div>
+                  )}
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
 
@@ -201,22 +273,29 @@ export function ResultsDashboard({
           <div className="p-4 border-b bg-muted/30 flex items-center gap-2">
             <Server className="w-5 h-5 text-secondary" />
             <h3 className="font-bold">MCP Tool Activity</h3>
-            {diagnosis.mcpToolCalls?.length > 0 && (
+            {hasMcpCalls && (
               <span className="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-md border ml-auto">
-                {diagnosis.mcpToolCalls.length} calls
+                {mcpCalls.length} calls
               </span>
             )}
           </div>
           <div className="p-4 flex-1 overflow-y-auto space-y-3">
-            {diagnosis.mcpToolCalls?.length > 0 ? (
-              diagnosis.mcpToolCalls.map((call, idx) => (
-                <McpToolCallCard key={idx} call={call} />
+            {mcpCalls.length === 0 && isStreaming ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground text-sm flex-col gap-2 min-h-[100px]">
+                <div className="w-6 h-6 border-2 border-secondary/30 border-t-secondary rounded-full animate-spin" />
+                Awaiting MCP calls...
+              </div>
+            ) : mcpCalls.length > 0 ? (
+              mcpCalls.map((call, idx) => (
+                <motion.div key={idx} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
+                  <McpToolCallCard call={call} />
+                </motion.div>
               ))
             ) : (
               <p className="text-sm text-muted-foreground text-center pt-8">No MCP tool calls recorded.</p>
             )}
 
-            {diagnosis.conflictResolutions?.length > 0 && (
+            {diagnosis?.conflictResolutions && diagnosis.conflictResolutions.length > 0 && (
               <div className="mt-4 pt-4 border-t">
                 <h4 className="font-bold text-xs text-warning uppercase tracking-wider mb-3">Conflict Resolutions</h4>
                 {diagnosis.conflictResolutions.map((conflict, idx) => (
@@ -243,7 +322,7 @@ export function ResultsDashboard({
           </div>
           <div className="p-4 flex-1 overflow-y-auto space-y-4">
             {!cases ? (
-              <div className="h-full flex items-center justify-center text-muted-foreground text-sm flex-col gap-2">
+              <div className="h-full flex items-center justify-center text-muted-foreground text-sm flex-col gap-2 min-h-[100px]">
                 <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                 Searching vector store...
               </div>
@@ -251,37 +330,39 @@ export function ResultsDashboard({
                <p className="text-sm text-muted-foreground text-center pt-8">No highly similar historical cases found.</p>
             ) : (
               cases.results.map((c) => (
-                <div key={c.caseId} className="border rounded-xl p-4 bg-background/50 hover:bg-background transition-colors">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-bold text-sm text-foreground line-clamp-1" title={c.diagnosis}>{c.diagnosis}</h4>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                        <MapPin className="w-3 h-3" /> {c.region}, {c.country}
-                      </p>
+                <motion.div key={c.caseId} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                  <div className="border rounded-xl p-4 bg-background/50 hover:bg-background transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-bold text-sm text-foreground line-clamp-1" title={c.diagnosis}>{c.diagnosis}</h4>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                          <MapPin className="w-3 h-3" /> {c.region}, {c.country}
+                        </p>
+                      </div>
+                      <ConfidenceBadge score={c.similarityScore} />
                     </div>
-                    <ConfidenceBadge score={c.similarityScore} />
-                  </div>
-                  <div className="mt-3">
-                    <p className="text-xs text-foreground font-medium mb-1">Treatment Applied:</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{c.treatmentApplied}</p>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <span className="text-xs font-bold text-muted-foreground">Outcome:</span>
-                    <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className={cn("h-full rounded-full", c.outcomeScore > 0.7 ? "bg-success" : "bg-warning")}
-                        style={{ width: `${c.outcomeScore * 100}%` }}
-                      />
+                    <div className="mt-3">
+                      <p className="text-xs text-foreground font-medium mb-1">Treatment Applied:</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{c.treatmentApplied}</p>
                     </div>
-                    <span className="text-xs font-medium">{Math.round(c.outcomeScore * 100)}%</span>
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="text-xs font-bold text-muted-foreground">Outcome:</span>
+                      <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={cn("h-full rounded-full", c.outcomeScore > 0.7 ? "bg-success" : "bg-warning")}
+                          style={{ width: `${c.outcomeScore * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium">{Math.round(c.outcomeScore * 100)}%</span>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
           </div>
         </div>
 
-        <FinalRecommendationCard data={diagnosis} />
+        {diagnosis && <FinalRecommendationCard data={diagnosis} />}
 
       </div>
     </motion.div>

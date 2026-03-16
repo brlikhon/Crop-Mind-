@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Database, Bot, BrainCircuit, MessageSquare, ShieldCheck, Server, Cloud, Cpu, CheckCircle2, TrendingUp, Rocket } from "lucide-react";
+import { Database, Bot, BrainCircuit, MessageSquare, ShieldCheck, Server, Cloud, Cpu, CheckCircle2, TrendingUp, Rocket, BookOpen, Terminal, GitBranch } from "lucide-react";
 
 export default function ArchitecturePage() {
   const containerVariants = {
@@ -198,6 +198,99 @@ export default function ArchitecturePage() {
             <p className="text-xs text-muted-foreground leading-relaxed">
               Production deployment targets Vertex AI with Gemini models for agent reasoning and text-embedding-005 for case vectorization. The modular agent architecture allows swapping model providers without changing orchestration logic.
             </p>
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="bg-card border rounded-2xl p-8 shadow-sm mt-16"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-primary/10 p-2 rounded-lg text-primary">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground">About CropMind</h2>
+        </div>
+
+        <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
+          <p>
+            <strong className="text-foreground">CropMind</strong> is an APAC Agricultural Intelligence Network built for the Google Cloud Gen AI Academy APAC 2026. It demonstrates how agentic AI, real-world data grounding, and vector similarity search can be combined into a production-ready system that serves 500M+ smallholder farmers.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+            <div className="border rounded-lg p-4 bg-primary/5">
+              <h4 className="font-bold text-foreground text-sm mb-2">Track 1: ADK Multi-Agent</h4>
+              <p className="text-xs">Orchestrator with 4 specialized sub-agents (CropDisease, Weather, Market, Treatment). Supports conflict resolution and synthesis.</p>
+            </div>
+            <div className="border rounded-lg p-4 bg-secondary/5">
+              <h4 className="font-bold text-foreground text-sm mb-2">Track 2: MCP Tool Servers</h4>
+              <p className="text-xs">4 tool servers (WeatherTool, CropAlertTool, MarketPriceTool, SubsidyTool) providing real-time external data grounding via Model Context Protocol.</p>
+            </div>
+            <div className="border rounded-lg p-4 bg-accent/20">
+              <h4 className="font-bold text-foreground text-sm mb-2">Track 3: AlloyDB pgvector</h4>
+              <p className="text-xs">550+ historical farmer cases across 10 APAC countries with vector embeddings for semantic similarity search.</p>
+            </div>
+          </div>
+
+          <div className="border-t pt-6 mt-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Terminal className="w-5 h-5 text-primary" />
+              <h3 className="font-bold text-foreground text-lg">Deployment to Google Cloud</h3>
+            </div>
+            <div className="space-y-4 text-sm">
+              <div className="bg-muted/50 rounded-lg p-4">
+                <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
+                  <GitBranch className="w-4 h-4" /> Step 1: Provision AlloyDB
+                </h4>
+                <p className="text-xs mb-2">Create an AlloyDB for PostgreSQL cluster in your GCP project. Enable the pgvector extension and run the schema migration:</p>
+                <code className="block bg-background border rounded p-2 text-[11px] font-mono">
+                  gcloud alloydb clusters create cropmind-cluster --region=asia-southeast1<br/>
+                  gcloud alloydb instances create cropmind-primary --cluster=cropmind-cluster --instance-type=PRIMARY<br/>
+                  psql $ALLOYDB_URL -c "CREATE EXTENSION IF NOT EXISTS vector"<br/>
+                  pnpm run db:push
+                </code>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4">
+                <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
+                  <Cloud className="w-4 h-4" /> Step 2: Deploy to Cloud Run
+                </h4>
+                <p className="text-xs mb-2">Build the container and deploy the API server and React frontend:</p>
+                <code className="block bg-background border rounded p-2 text-[11px] font-mono">
+                  gcloud builds submit --tag gcr.io/$PROJECT_ID/cropmind-api<br/>
+                  gcloud run deploy cropmind-api --image gcr.io/$PROJECT_ID/cropmind-api \<br/>
+                  &nbsp;&nbsp;--region asia-southeast1 --allow-unauthenticated \<br/>
+                  &nbsp;&nbsp;--set-env-vars DATABASE_URL=$ALLOYDB_URL \<br/>
+                  &nbsp;&nbsp;--set-env-vars OPENAI_API_KEY=$KEY \<br/>
+                  &nbsp;&nbsp;--add-cloudsql-instances $ALLOYDB_CONNECTION_NAME
+                </code>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4">
+                <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
+                  <BrainCircuit className="w-4 h-4" /> Step 3: Configure Vertex AI (Production)
+                </h4>
+                <p className="text-xs mb-2">For production, swap the LLM provider to Vertex AI with Gemini models:</p>
+                <code className="block bg-background border rounded p-2 text-[11px] font-mono">
+                  AGENT_MODEL=gemini-2.0-flash<br/>
+                  EMBEDDING_MODEL=text-embedding-005<br/>
+                  VERTEX_AI_PROJECT=$PROJECT_ID<br/>
+                  VERTEX_AI_LOCATION=asia-southeast1
+                </code>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-6 mt-6">
+            <h3 className="font-bold text-foreground text-lg mb-3">Tech Stack</h3>
+            <div className="flex flex-wrap gap-2">
+              {["TypeScript", "Node.js", "Express", "React", "Vite", "TailwindCSS", "Framer Motion", "OpenAI GPT-4o-mini", "PostgreSQL", "pgvector", "Drizzle ORM", "React Query", "SSE Streaming"].map(tech => (
+                <span key={tech} className="text-xs bg-muted px-2.5 py-1 rounded-full font-medium">{tech}</span>
+              ))}
+            </div>
           </div>
         </div>
       </motion.div>

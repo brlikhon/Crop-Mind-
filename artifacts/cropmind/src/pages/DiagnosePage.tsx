@@ -85,6 +85,7 @@ export default function DiagnosePage() {
   };
 
   const isPending = isStreaming;
+  const showResults = hasStarted && (liveTraces.length > 0 || liveMcpCalls.length > 0 || diagnosisResult != null);
 
   return (
     <div className="w-full flex flex-col items-center pb-24">
@@ -92,31 +93,25 @@ export default function DiagnosePage() {
         <DiagnosticForm onSubmit={handleDiagnose} isPending={isPending} />
       </div>
 
-      {(isPending || (liveTraces.length > 0 && !diagnosisResult)) && (
+      {hasStarted && (
         <AgentVisualizer
-          traces={liveTraces}
-          activeAgents={activeAgents}
-          mcpCalls={liveMcpCalls}
-          isSynthesizing={isSynthesizing}
+          traces={diagnosisResult?.traces ?? liveTraces}
+          activeAgents={diagnosisResult ? [] : activeAgents}
+          mcpCalls={diagnosisResult?.mcpToolCalls ?? liveMcpCalls}
+          isSynthesizing={diagnosisResult ? false : isSynthesizing}
           isLoading={isPending}
+          totalDurationMs={diagnosisResult?.totalDurationMs}
         />
       )}
 
-      {diagnosisResult && (
-        <>
-          <AgentVisualizer
-            traces={diagnosisResult.traces}
-            activeAgents={[]}
-            mcpCalls={diagnosisResult.mcpToolCalls}
-            isSynthesizing={false}
-            isLoading={false}
-            totalDurationMs={diagnosisResult.totalDurationMs}
-          />
-          <ResultsDashboard
-            diagnosis={diagnosisResult}
-            cases={searchMutation.data}
-          />
-        </>
+      {showResults && (
+        <ResultsDashboard
+          diagnosis={diagnosisResult}
+          cases={searchMutation.data}
+          liveTraces={liveTraces}
+          liveMcpCalls={liveMcpCalls}
+          isStreaming={isStreaming}
+        />
       )}
     </div>
   );
