@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: CropMind API - APAC Agricultural Intelligence Network
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: cropagent
+    description: Multi-agent crop intelligence operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /cropagent/diagnose:
+    post:
+      operationId: diagnoseCrop
+      tags: [cropagent]
+      summary: Run multi-agent crop diagnosis
+      description: Accepts a farmer's natural language query and runs it through the multi-agent orchestration system (CropDisease, Weather, Market, Treatment agents) returning a unified diagnosis with traces.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiagnoseRequest"
+      responses:
+        "200":
+          description: Successful diagnosis with full agent traces
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagnoseResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +66,219 @@ components:
           type: string
       required:
         - status
-
+    DiagnoseRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Natural language description of the crop situation
+          minLength: 1
+          maxLength: 5000
+      required:
+        - query
+    DiagnoseResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        query:
+          $ref: "#/components/schemas/FarmerQuery"
+        diagnosis:
+          oneOf:
+            - $ref: "#/components/schemas/DiagnosisResult"
+            - type: "null"
+        weatherAssessment:
+          oneOf:
+            - $ref: "#/components/schemas/WeatherAssessment"
+            - type: "null"
+        marketIntelligence:
+          oneOf:
+            - $ref: "#/components/schemas/MarketIntelligence"
+            - type: "null"
+        treatmentProtocol:
+          oneOf:
+            - $ref: "#/components/schemas/TreatmentProtocol"
+            - type: "null"
+        finalRecommendation:
+          type: string
+        confidenceScore:
+          type: number
+        traces:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentTrace"
+        totalDurationMs:
+          type: number
+      required:
+        - sessionId
+        - query
+        - finalRecommendation
+        - confidenceScore
+        - traces
+        - totalDurationMs
+    FarmerQuery:
+      type: object
+      properties:
+        rawQuery:
+          type: string
+        cropType:
+          type: string
+        region:
+          type: string
+        country:
+          type: string
+        symptoms:
+          type: array
+          items:
+            type: string
+        additionalContext:
+          type: string
+      required:
+        - rawQuery
+        - cropType
+        - region
+        - country
+        - symptoms
+        - additionalContext
+    DiagnosisResult:
+      type: object
+      properties:
+        primaryDiagnosis:
+          type: string
+        confidence:
+          type: number
+        differentialDiagnoses:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              probability:
+                type: number
+              reasoning:
+                type: string
+            required:
+              - name
+              - probability
+              - reasoning
+      required:
+        - primaryDiagnosis
+        - confidence
+        - differentialDiagnoses
+    WeatherAssessment:
+      type: object
+      properties:
+        currentConditions:
+          type: string
+        forecast:
+          type: string
+        weatherRisk:
+          type: string
+        adaptations:
+          type: array
+          items:
+            type: string
+      required:
+        - currentConditions
+        - forecast
+        - weatherRisk
+        - adaptations
+    MarketIntelligence:
+      type: object
+      properties:
+        currentPrice:
+          type: string
+        priceOutlook:
+          type: string
+        recommendation:
+          type: string
+        availableSubsidies:
+          type: array
+          items:
+            type: string
+      required:
+        - currentPrice
+        - priceOutlook
+        - recommendation
+        - availableSubsidies
+    TreatmentProtocol:
+      type: object
+      properties:
+        immediateActions:
+          type: array
+          items:
+            type: string
+        preventiveMeasures:
+          type: array
+          items:
+            type: string
+        timelineWeeks:
+          type: number
+        estimatedCost:
+          type: string
+        localResources:
+          type: array
+          items:
+            type: string
+      required:
+        - immediateActions
+        - preventiveMeasures
+        - timelineWeeks
+        - estimatedCost
+        - localResources
+    AgentTrace:
+      type: object
+      properties:
+        agentName:
+          type: string
+        startedAt:
+          type: number
+        completedAt:
+          type: number
+        durationMs:
+          type: number
+        input:
+          type: object
+        output:
+          $ref: "#/components/schemas/AgentFinding"
+      required:
+        - agentName
+        - startedAt
+        - completedAt
+        - durationMs
+        - input
+        - output
+    AgentFinding:
+      type: object
+      properties:
+        agentName:
+          type: string
+        status:
+          type: string
+          enum:
+            - success
+            - error
+            - skipped
+        confidence:
+          type: number
+        summary:
+          type: string
+        details:
+          type: object
+        reasoning:
+          type: string
+      required:
+        - agentName
+        - status
+        - confidence
+        - summary
+        - details
+        - reasoning
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

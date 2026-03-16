@@ -2,6 +2,8 @@
 
 ## Overview
 
+CropMind — APAC Agricultural Intelligence Network. A multi-agent AI system for crop diagnosis serving 500M+ smallholder farmers. Uses ADK multi-agent orchestration, MCP tool servers, and AlloyDB vector intelligence.
+
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
 ## Stack
@@ -57,7 +59,16 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
 - Entry: `src/index.ts` — reads `PORT`, starts Express
 - App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
 - Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
+- Depends on: `@workspace/db`, `@workspace/api-zod`, `@workspace/integrations-openai-ai-server`
+- Multi-Agent System: `src/agents/` contains the CropMind multi-agent orchestration engine:
+  - `types.ts` — shared type definitions for agents, sessions, traces
+  - `session.ts` — agent session management and trace recording
+  - `orchestrator.ts` — central controller that parses queries, runs sub-agents, synthesises results
+  - `crop-disease-agent.ts` — CropDiseaseAgent (differential diagnosis)
+  - `weather-agent.ts` — WeatherAdaptationAgent (climate impact analysis)
+  - `market-agent.ts` — MarketSubsidyAgent (economic viability + subsidies)
+  - `treatment-agent.ts` — TreatmentProtocolAgent (actionable treatment plan)
+- CropAgent route: POST /api/cropagent/diagnose — runs multi-agent orchestration
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
 - `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
 - Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
