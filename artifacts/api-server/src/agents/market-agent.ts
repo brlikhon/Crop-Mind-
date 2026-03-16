@@ -1,4 +1,5 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
 import type { AgentSession, AgentFinding, MarketIntelligence } from "./types.js";
 
 const SYSTEM_PROMPT = `You are MarketSubsidyAgent, an expert in APAC agricultural economics specializing in crop commodity markets and government agricultural subsidy programs.
@@ -34,8 +35,8 @@ ${diseaseFindings ? `- Diagnosis: ${diseaseFindings.summary}` : ""}
 Advise on the economic viability of treatment vs replanting, current market prices, and any government support programs available in ${query.country}.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    max_completion_tokens: 4096,
+    model: AGENT_MODEL,
+    max_completion_tokens: AGENT_MAX_TOKENS,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userMessage },

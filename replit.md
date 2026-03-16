@@ -63,6 +63,7 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
 - Multi-Agent System: `src/agents/` contains the CropMind multi-agent orchestration engine:
   - `types.ts` — shared type definitions for agents, sessions, traces
   - `session.ts` — agent session management and trace recording
+  - `config.ts` — centralized model configuration (AGENT_MODEL, AGENT_MAX_TOKENS, ORCHESTRATOR_MAX_TOKENS)
   - `orchestrator.ts` — central controller that parses queries, runs sub-agents, synthesises results
   - `crop-disease-agent.ts` — CropDiseaseAgent (differential diagnosis)
   - `weather-agent.ts` — WeatherAdaptationAgent (climate impact analysis)
@@ -118,6 +119,20 @@ Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used b
 ### `lib/api-client-react` (`@workspace/api-client-react`)
 
 Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+
+### `artifacts/cropmind` (`@workspace/cropmind`)
+
+React + Vite frontend dashboard for CropMind. Two views:
+- **Diagnose** (`/`): farmer text area → multi-agent orchestration → results with agent traces, decisions, conflict resolution, and final recommendation
+- **Architecture** (`/architecture`): animated system diagram showing ADK orchestrator, MCP tool servers, sub-agents, and AlloyDB vector store
+
+- Stack: React 19, Vite 7, TailwindCSS 4, Framer Motion, Lucide React, TanStack React Query
+- Entry: `src/main.tsx` → `src/App.tsx` (wouter routing)
+- Hooks: `src/hooks/use-api.ts` — `useDiagnoseCrop()`, `useSearchCases()`, `useMcpTools()`, `useHealthCheck()`
+- Pages: `src/pages/DiagnoseView.tsx`, `src/pages/ArchitectureView.tsx`
+- Components: `src/components/` (Header, AgentCard, ResultsPanel, etc.)
+- `pnpm --filter @workspace/cropmind run dev` — dev server
+- Preview at previewPath `/`
 
 ### `scripts` (`@workspace/scripts`)
 

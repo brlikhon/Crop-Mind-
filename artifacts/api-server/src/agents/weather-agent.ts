@@ -1,4 +1,5 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
 import type { AgentSession, AgentFinding, WeatherAssessment } from "./types.js";
 
 const SYSTEM_PROMPT = `You are WeatherAdaptationAgent, an expert agricultural meteorologist specializing in APAC climate patterns and their impact on crop health and treatment timing.
@@ -34,8 +35,8 @@ ${diseaseFindings ? `- Preliminary diagnosis: ${diseaseFindings.summary}` : ""}
 Consider the current month/season for this APAC region and how weather patterns affect this crop condition.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    max_completion_tokens: 4096,
+    model: AGENT_MODEL,
+    max_completion_tokens: AGENT_MAX_TOKENS,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userMessage },

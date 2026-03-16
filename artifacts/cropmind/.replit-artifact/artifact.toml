@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "CropMind - APAC Agricultural Intelligence"
+version = "1.0.0"
+id = "artifacts/cropmind"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 21961
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/cropmind run dev"
+
+[services.env]
+PORT = "21961"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/cropmind", "run", "build"]
+publicDir = "artifacts/cropmind/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

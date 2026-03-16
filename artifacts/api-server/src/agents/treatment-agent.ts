@@ -1,4 +1,5 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
 import type { AgentSession, AgentFinding, TreatmentProtocol } from "./types.js";
 
 const SYSTEM_PROMPT = `You are TreatmentProtocolAgent, an expert agricultural extension officer specializing in practical, actionable treatment plans for smallholder farmers across APAC.
@@ -40,8 +41,8 @@ ${findingsSummary}
 Create a practical, step-by-step treatment plan that accounts for the diagnosis, weather conditions, and economic factors identified by the other agents.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    max_completion_tokens: 4096,
+    model: AGENT_MODEL,
+    max_completion_tokens: AGENT_MAX_TOKENS,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userMessage },

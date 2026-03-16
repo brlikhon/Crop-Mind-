@@ -1,4 +1,5 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { AGENT_MODEL, ORCHESTRATOR_MAX_TOKENS } from "./config.js";
 import type {
   FarmerQuery,
   OrchestratorResult,
@@ -35,8 +36,8 @@ interface ParsedQuery extends FarmerQuery {
 
 async function parseQuery(rawQuery: string): Promise<ParsedQuery> {
   const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    max_completion_tokens: 2048,
+    model: AGENT_MODEL,
+    max_completion_tokens: ORCHESTRATOR_MAX_TOKENS,
     messages: [
       { role: "system", content: PARSE_PROMPT },
       { role: "user", content: rawQuery },
@@ -384,8 +385,8 @@ export async function runOrchestrator(rawQuery: string): Promise<OrchestratorRes
     : "";
 
   const synthesisResponse = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    max_completion_tokens: 2048,
+    model: AGENT_MODEL,
+    max_completion_tokens: ORCHESTRATOR_MAX_TOKENS,
     messages: [
       { role: "system", content: SYNTHESIS_PROMPT },
       {

@@ -1,0 +1,15 @@
+packages:
+  "framer-motion": "For smooth page transitions, stagger animations, and the interactive architecture diagram"
+  "lucide-react": "For beautiful consistent iconography across the dashboard"
+  "clsx": "For conditional tailwind class merging"
+  "tailwind-merge": "For merging tailwind classes safely"
+  "date-fns": "For formatting timestamps in the timeline"
+
+images:
+  - path: "artifacts/cropmind/public/images/bg-texture.png"
+    description: "Subtle, minimal topographic map texture, very light opacity, earthy tones, abstract agricultural technology concept"
+    aspect_ratio: "16:9"
+
+notes:
+  - Using local fetch hooks mimicking the provided OpenAPI schema to guarantee zero dependency resolution issues across the monorepo.
+  - The API endpoints are POST /api/cropagent/diagnose and POST /api/cases/search.

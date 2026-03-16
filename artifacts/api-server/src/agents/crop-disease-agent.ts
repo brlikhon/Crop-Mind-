@@ -1,4 +1,5 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
 import type { AgentSession, AgentFinding, DiagnosisResult } from "./types.js";
 
 const SYSTEM_PROMPT = `You are CropDiseaseAgent, an expert agricultural pathologist specializing in crop diseases across APAC regions. You analyze symptom descriptions and provide differential diagnoses.
@@ -31,8 +32,8 @@ export async function runCropDiseaseAgent(session: AgentSession): Promise<AgentF
 - Original farmer description: "${query.rawQuery}"`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
-    max_completion_tokens: 4096,
+    model: AGENT_MODEL,
+    max_completion_tokens: AGENT_MAX_TOKENS,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userMessage },
