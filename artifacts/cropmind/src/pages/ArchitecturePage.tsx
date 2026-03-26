@@ -222,12 +222,12 @@ export default function ArchitecturePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
             <div className="border rounded-lg p-4 bg-primary/5">
-              <h4 className="font-bold text-foreground text-sm mb-2">Track 1: Vertex AI Multi-Agent</h4>
-              <p className="text-xs">Custom orchestrator with 4 specialized sub-agents (CropDisease, Weather, Market, Treatment) built on Gemini 2.5 Flash/Pro. Supports conflict resolution and synthesis.</p>
+              <h4 className="font-bold text-foreground text-sm mb-2">Track 1: ADK Multi-Agent</h4>
+              <p className="text-xs">4 LlmAgent instances executed via InMemoryRunner with FunctionTool bindings. Orchestrator manages sessions, parallel execution, and conflict resolution using Gemini 2.5 Flash/Pro.</p>
             </div>
             <div className="border rounded-lg p-4 bg-secondary/5">
-              <h4 className="font-bold text-foreground text-sm mb-2">Track 2: MCP Tool Servers</h4>
-              <p className="text-xs">4 tool servers (WeatherTool, CropAlertTool, MarketPriceTool, SubsidyTool) providing real-time external data grounding via Model Context Protocol.</p>
+              <h4 className="font-bold text-foreground text-sm mb-2">Track 2: MCP Tool Server</h4>
+              <p className="text-xs">Standards-compliant MCP server (@modelcontextprotocol/sdk) with SSE transport. 4 tools (Weather, CropAlerts, MarketPrices, Subsidies) accessible by any MCP client.</p>
             </div>
             <div className="border rounded-lg p-4 bg-accent/20">
               <h4 className="font-bold text-foreground text-sm mb-2">Track 3: AlloyDB pgvector</h4>
@@ -287,7 +287,7 @@ export default function ArchitecturePage() {
           <div className="border-t pt-6 mt-6">
             <h3 className="font-bold text-foreground text-lg mb-3">Tech Stack</h3>
             <div className="flex flex-wrap gap-2">
-              {["TypeScript", "Node.js", "Express", "React", "Vite", "TailwindCSS", "Framer Motion", "Gemini 2.5 Flash", "Gemini 2.5 Pro", "gemini-embedding-001", "Cloud SQL PostgreSQL", "pgvector", "Drizzle ORM", "React Query", "SSE Streaming", "Cloud Run"].map(tech => (
+              {["TypeScript", "Google ADK 0.5", "@modelcontextprotocol/sdk", "Node.js", "Express", "React", "Vite", "TailwindCSS", "Framer Motion", "Gemini 2.5 Flash", "Gemini 2.5 Pro", "gemini-embedding-001", "Cloud SQL PostgreSQL", "pgvector", "Drizzle ORM", "React Query", "SSE Streaming", "Cloud Run", "Multimodal (Image+Text)"].map(tech => (
                 <span key={tech} className="text-xs bg-muted px-2.5 py-1 rounded-full font-medium">{tech}</span>
               ))}
             </div>

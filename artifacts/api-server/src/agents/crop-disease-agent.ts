@@ -1,8 +1,9 @@
-import { createChatCompletion } from "@workspace/integrations-google-vertex-ai-server";
+import { LlmAgent, InMemoryRunner } from "@google/adk";
 import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
-import type { AgentSession, AgentFinding, DiagnosisResult } from "./types.js";
+import type { OrchestratorSession } from "./session.js";
+import type { AgentFinding, DiagnosisResult, ImageInput } from "./types.js";
 
-const SYSTEM_PROMPT = `You are CropDiseaseAgent, an expert agricultural pathologist specializing in crop diseases across APAC regions. You analyze symptom descriptions and provide differential diagnoses.
+const SYSTEM_PROMPT = `You are CropDiseaseAgent, an expert agricultural pathologist specializing in crop diseases across APAC regions. You analyze symptom descriptions (and crop photos when provided) to generate differential diagnoses.
 
 You must respond with ONLY valid JSON matching this schema:
 {
@@ -19,34 +20,58 @@ You must respond with ONLY valid JSON matching this schema:
   "reasoning": "string - your step-by-step diagnostic reasoning"
 }
 
-Consider common diseases for the given crop type in the specified APAC region. Factor in seasonal patterns, regional prevalence, and symptom combinations. Always provide at least 2 differential diagnoses.`;
+Consider common diseases for the given crop type in the specified APAC region. Factor in seasonal patterns, regional prevalence, and symptom combinations. If a photo is provided, analyze visible symptoms alongside the text description. Always provide at least 2 differential diagnoses.`;
 
-export async function runCropDiseaseAgent(session: AgentSession): Promise<AgentFinding> {
+const diseaseAgent = new LlmAgent({
+  name: "CropDiseaseAgent",
+  model: AGENT_MODEL,
+  instruction: SYSTEM_PROMPT,
+  generateContentConfig: {
+    maxOutputTokens: AGENT_MAX_TOKENS,
+    temperature: 0.4,
+  },
+});
+
+const diseaseRunner = new InMemoryRunner({ agent: diseaseAgent, appName: "cropmind" });
+
+export async function runCropDiseaseAgent(session: OrchestratorSession, imageData?: ImageInput): Promise<AgentFinding> {
   const { query } = session;
 
-  const userMessage = `Analyze these crop symptoms:
+  const textPrompt = `Analyze these crop symptoms:
 - Crop: ${query.cropType}
 - Region: ${query.region}, ${query.country}
 - Symptoms: ${query.symptoms.join(", ")}
 - Additional context: ${query.additionalContext}
-- Original farmer description: "${query.rawQuery}"`;
+- Original farmer description: "${query.rawQuery}"${imageData ? "\n\nA photo of the affected crop has been attached. Analyze the visual symptoms in the image alongside the text description." : ""}`;
 
-  const response = await createChatCompletion({
-    model: AGENT_MODEL,
-    max_completion_tokens: AGENT_MAX_TOKENS,
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userMessage },
-    ],
+  const parts: Array<Record<string, unknown>> = [{ text: textPrompt }];
+  if (imageData) {
+    parts.push({
+      inlineData: { mimeType: imageData.mimeType, data: imageData.base64 },
+    });
+  }
+
+  let content = "";
+  const events = diseaseRunner.runEphemeral({
+    userId: session.adkUserId,
+    newMessage: { role: "user", parts },
   });
 
-  const content = response.choices[0]?.message?.content ?? "";
+  for await (const event of events) {
+    if (event.content?.parts) {
+      for (const part of event.content.parts) {
+        if ("text" in part && part.text) content += part.text;
+      }
+    }
+  }
+
   let diagnosis: DiagnosisResult;
   let summary: string;
   let reasoning: string;
 
   try {
-    const parsed = JSON.parse(content);
+    const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(jsonStr);
     diagnosis = {
       primaryDiagnosis: parsed.primaryDiagnosis,
       confidence: parsed.confidence,

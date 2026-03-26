@@ -152,12 +152,18 @@ export function useDiagnoseCrop() {
 
 export async function streamDiagnose(
   query: string,
-  callbacks: StreamCallbacks
+  callbacks: StreamCallbacks,
+  imageFile?: File
 ): Promise<DiagnoseResponse | null> {
+  const formData = new FormData();
+  formData.append("query", query);
+  if (imageFile) {
+    formData.append("image", imageFile);
+  }
+
   const res = await fetch("/api/cropagent/diagnose/stream", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
+    body: formData,
   });
 
   if (!res.ok) {

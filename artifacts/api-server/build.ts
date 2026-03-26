@@ -11,30 +11,14 @@ const __dirname = path.dirname(__filename);
 // packages that are not bundle compatible
 const allowlist = [
   "@google/generative-ai",
-  "axios",
-  "connect-pg-simple",
   "cors",
-  "date-fns",
   "drizzle-orm",
   "drizzle-zod",
   "express",
   "express-rate-limit",
-  "express-session",
-  "jsonwebtoken",
-  "memorystore",
   "multer",
-  "nanoid",
-  "nodemailer",
-  "openai",
-  "passport",
-  "passport-local",
   "pg",
-  "stripe",
-  "uuid",
-  "ws",
-  "xlsx",
   "zod",
-  "zod-validation-error",
 ];
 
 async function buildAll() {

@@ -9,23 +9,26 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@workspace/db": "workspace:*",
+    "@google/adk": "^0.5.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@workspace/api-zod": "workspace:*",
-    "@workspace/integrations-openai-ai-server": "workspace:*",
+    "@workspace/db": "workspace:*",
     "@workspace/integrations-google-vertex-ai-server": "workspace:*",
-    "@google/adk": "^0.1.0",
+
+
+    "cors": "^2",
     "drizzle-orm": "catalog:",
     "express": "^5",
     "express-rate-limit": "^7.5.0",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2",
+    "multer": "^2.1.1",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
-    "@types/express": "^5.0.6",
+
     "@types/cors": "^2.8.19",
-    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node": "catalog:",
     "esbuild": "^0.27.3",
     "tsx": "catalog:"
   }

@@ -51,6 +51,7 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 ENV PORT=8080
+ENV GOOGLE_GENAI_USE_VERTEXAI=true
 
 # Copy production dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules

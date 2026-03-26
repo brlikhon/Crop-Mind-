@@ -107,3 +107,8 @@ export interface OrchestratorResult {
   mcpToolCalls: McpToolCallEntry[];
   totalDurationMs: number;
 }
+
+export interface ImageInput {
+  base64: string;
+  mimeType: string;
+}

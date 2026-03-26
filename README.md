@@ -1,17 +1,16 @@
 # CropMind - APAC Agricultural Intelligence Network
 
-**Built with Google Agent Development Kit (ADK) + Vertex AI + Cloud Run**
+**Built with Google Agent Development Kit (ADK) + Vertex AI + MCP + Cloud Run**
 
-> A multi-agent AI system for crop diagnosis serving 500M+ smallholder farmers across APAC. Combines Google Vertex AI Gemini models, MCP tool servers, and vector intelligence for accurate, actionable agricultural recommendations.
+> A multi-agent AI system for crop diagnosis serving smallholder farmers across APAC. Combines Google Vertex AI Gemini models, ADK agent orchestration, MCP tool servers, and pgvector intelligence for accurate, actionable agricultural recommendations.
 
-## 🏆 Competition Submission
+## Competition Submission
 
 - **Track**: Track 1 - Build and Deploy AI Agents using ADK
-- **Live Demo**: [https://cropmind-frontend-XXXXX.run.app](https://cropmind-frontend-XXXXX.run.app)
-- **API Endpoint**: [https://cropmind-api-XXXXX.run.app](https://cropmind-api-XXXXX.run.app)
-- **Video Demo**: [YouTube Link](https://youtube.com/...)
+- **Live Demo**: _deployed on Cloud Run_
+- **API Endpoint**: _deployed on Cloud Run_
 
-## 🎯 Problem Statement
+## Problem Statement
 
 Smallholder farmers in APAC face critical challenges:
 - **Limited access** to agricultural extension services
@@ -19,24 +18,22 @@ Smallholder farmers in APAC face critical challenges:
 - **Time-sensitive** crop disease decisions with high economic impact
 - **Fragmented information** across weather, market, and treatment domains
 
-**Impact**: Crop losses cost APAC farmers $50B+ annually, with 60% preventable through timely diagnosis.
+## Solution Architecture
 
-## 💡 Solution Architecture
-
-CropMind uses **Google Vertex AI** to orchestrate 4 specialized AI agents that work together to provide comprehensive crop diagnosis:
+CropMind uses **Google ADK (Agent Development Kit)** to orchestrate 4 specialized AI agents, each executed via `InMemoryRunner` with proper session management. Agents call real-world data tools via `FunctionTool` bindings, with the same tools exposed as a standards-compliant **MCP server** for external clients.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Farmer Query (Natural Language)           │
+│              Farmer Query (Text + Optional Photo)            │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              Orchestrator (Vertex AI Gemini)                 │
-│  • Parses query → structured data                            │
-│  • Decides which agents to invoke                            │
+│         ADK Orchestrator (InMemoryRunner + Gemini Pro)       │
+│  • Parses query via ADK session                              │
+│  • Routes to sub-agents via InMemoryRunner                   │
 │  • Resolves conflicts between agents                         │
-│  • Synthesizes final recommendation                          │
+│  • Synthesizes final recommendation via ADK session          │
 └────────────────────────┬────────────────────────────────────┘
                          │
          ┌───────────────┼───────────────┬──────────────┐
@@ -45,37 +42,39 @@ CropMind uses **Google Vertex AI** to orchestrate 4 specialized AI agents that w
 ┌─────────────┐  ┌─────────────┐  ┌──────────┐  ┌──────────┐
 │   Disease   │  │   Weather   │  │  Market  │  │Treatment │
 │    Agent    │  │    Agent    │  │  Agent   │  │  Agent   │
-│  (Gemini)   │  │  (Gemini)   │  │ (Gemini) │  │ (Gemini) │
-└──────┬──────┘  └──────┬──────┘  └────┬─────┘  └────┬─────┘
-       │                │              │             │
-       │                ▼              ▼             │
-       │         ┌─────────────────────────┐         │
-       │         │   MCP Tool Servers      │         │
-       │         │  • WeatherTool (API)    │         │
-       │         │  • CropAlertTool (DB)   │         │
-       │         │  • MarketPriceTool (DB) │         │
-       │         │  • SubsidyTool (DB)     │         │
-       │         └─────────────────────────┘         │
-       │                                              │
-       └──────────────────┬───────────────────────────┘
-                          ▼
-              ┌───────────────────────┐
-              │  Vector Intelligence  │
-              │  (Vertex AI Embeddings│
-              │   + PostgreSQL        │
-              │   pgvector)           │
-              │  • 550 historical     │
-              │    cases              │
-              │  • Semantic search    │
-              │  • Outcome weighting  │
-              └───────────────────────┘
+│ (ADK+Gemini)│  │ (ADK+Gemini)│  │(ADK+Gem.)│  │(ADK+Gem.)│
+│             │  │ FunctionTool│  │ Function │  │          │
+│  Multimodal │  │ get_weather │  │ Tool:    │  │Synthesizes│
+│  (text+img) │  │ get_alerts  │  │ prices,  │  │all inputs│
+└─────────────┘  └──────┬──────┘  │ subsidies│  └──────────┘
+                        │         └────┬─────┘
+                        │              │
+                        ▼              ▼
+              ┌─────────────────────────────┐
+              │   MCP Server (SSE transport) │
+              │  @modelcontextprotocol/sdk   │
+              │  • get_weather (Open-Meteo)  │
+              │  • get_crop_alerts (DB)      │
+              │  • get_market_prices (DB)    │
+              │  • get_subsidies (DB)        │
+              └──────────────┬──────────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │      pgvector Intelligence   │
+              │  (Vertex AI gemini-embedding │
+              │   -001 + PostgreSQL pgvector) │
+              │  • 550 historical cases      │
+              │  • Semantic search           │
+              │  • Outcome weighting         │
+              └─────────────────────────────┘
 ```
 
-## 🚀 Google Cloud Services Used
+## Google Cloud Services Used
 
 ### Core AI Services
-- **Vertex AI Gemini 1.5 Flash** - Multi-agent orchestration and reasoning
-- **Vertex AI Text Embeddings** - Semantic similarity search (768-dim vectors)
+- **Vertex AI Gemini 2.5 Flash** - Sub-agent reasoning (Disease, Weather, Market, Treatment)
+- **Vertex AI Gemini 2.5 Pro** - Orchestrator query parsing and final synthesis
+- **Vertex AI gemini-embedding-001** - Semantic similarity search (768-dim MRL vectors)
 
 ### Infrastructure
 - **Cloud Run** - Serverless deployment for API and frontend
@@ -83,46 +82,40 @@ CropMind uses **Google Vertex AI** to orchestrate 4 specialized AI agents that w
 - **Secret Manager** - Secure credential storage
 - **Cloud Build** - CI/CD pipeline
 
+### Agent Development Kit (ADK)
+- **`LlmAgent`** - Defines each specialized agent with model, instruction, and tools
+- **`InMemoryRunner`** - Executes each agent through ADK's proper execution loop
+- **`InMemorySessionService`** - Manages ADK sessions for each agent invocation
+- **`FunctionTool`** - Binds real data tools (weather API, DB queries) to agents
+
+### Model Context Protocol (MCP)
+- **`@modelcontextprotocol/sdk`** - Standards-compliant MCP server
+- **SSE Transport** - Real-time tool access for external MCP clients
+- **4 Tool Endpoints** - Weather, Crop Alerts, Market Prices, Subsidies
+
 ### Key Features
-- **Parallel Agent Execution** - Weather and Market agents run concurrently
+- **Parallel Agent Execution** - Weather and Market agents run concurrently via ADK
 - **Conflict Resolution Engine** - Handles disagreements between agents
 - **Streaming Responses** - Real-time agent progress via Server-Sent Events
-- **Vector Knowledge Base** - Learns from historical outcomes
+- **Multimodal Input** - Accepts crop photos alongside text descriptions
+- **Vector Knowledge Base** - Learns from historical outcomes (pgvector)
 
-## 📊 Validation Results
-
-Tested with 50 real crop disease cases from agricultural extension services:
-
-- **Diagnostic Accuracy**: 78% (39/50 correct primary diagnosis)
-- **Treatment Appropriateness**: 85% (expert-validated)
-- **Average Response Time**: 4.2 seconds
-- **User Satisfaction**: 4.2/5 (from 12 farmer interviews)
-
-### Case Study: Rice Blast in Punjab
-
-**Query**: "My rice plants have diamond-shaped lesions with gray centers, planted 8 weeks ago in Punjab"
-
-**CropMind Response**:
-- **Diagnosis**: Rice blast (Magnaporthe oryzae) - 92% confidence
-- **Weather Impact**: High humidity (85%) + recent rainfall → favorable for fungal spread
-- **Market Analysis**: Current rice price ₹2,100/quintal, treatment cost ₹800/acre → economically viable
-- **Treatment**: Apply Tricyclazole 75% WP @ 0.6g/L, spray early morning, repeat after 10 days
-- **Outcome**: Farmer treated crop, yield loss limited to 15% vs. 40-60% without intervention
-
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend
-- **Runtime**: Node.js 24
+- **Runtime**: Node.js
 - **Framework**: Express 5
-- **Language**: TypeScript 5.9
-- **Database**: PostgreSQL 15 + pgvector
+- **Language**: TypeScript
+- **AI Framework**: Google ADK 0.5 (`@google/adk`)
+- **MCP Server**: `@modelcontextprotocol/sdk`
+- **Database**: PostgreSQL + pgvector
 - **ORM**: Drizzle ORM
-- **Validation**: Zod v4
+- **Validation**: Zod
 - **Build**: esbuild (CJS bundle)
 
 ### Frontend
 - **Framework**: React 19
-- **Build Tool**: Vite 7
+- **Build Tool**: Vite
 - **Styling**: TailwindCSS 4
 - **Animation**: Framer Motion
 - **State**: TanStack React Query
@@ -133,17 +126,17 @@ Tested with 50 real crop disease cases from agricultural extension services:
 - **Structure**: Composite TypeScript projects
 - **Codegen**: Orval (OpenAPI → React Query + Zod)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 cropmind/
 ├── artifacts/
-│   ├── api-server/          # Express API with multi-agent system
+│   ├── api-server/          # Express API with ADK multi-agent system
 │   │   ├── src/
-│   │   │   ├── agents/      # 4 specialized agents + orchestrator
-│   │   │   ├── mcp/         # MCP tool server implementations
-│   │   │   ├── vectors/     # Embedding + vector search
-│   │   │   └── routes/      # API endpoints
+│   │   │   ├── agents/      # 4 ADK agents + orchestrator (InMemoryRunner)
+│   │   │   ├── mcp/         # MCP server + tool implementations
+│   │   │   ├── vectors/     # Embedding + pgvector search
+│   │   │   └── routes/      # API + MCP SSE endpoints
 │   │   └── Dockerfile       # Cloud Run deployment
 │   └── cropmind/            # React frontend dashboard
 │       ├── src/
@@ -155,13 +148,13 @@ cropmind/
 │   ├── db/                  # Drizzle ORM schema + migrations
 │   ├── api-spec/            # OpenAPI 3.1 specification
 │   ├── api-zod/             # Generated Zod schemas
-│   ├── api-client-react/   # Generated React Query hooks
+│   ├── api-client-react/    # Generated React Query hooks
 │   └── integrations-google-vertex-ai-server/  # Vertex AI wrapper
 ├── cloudbuild.yaml          # Cloud Build CI/CD
-└── DEPLOYMENT.md            # Step-by-step deployment guide
+└── README.md
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Google Cloud account with billing enabled
@@ -172,7 +165,7 @@ cropmind/
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/yourusername/cropmind.git
+git clone <repo-url>
 cd cropmind
 
 # 2. Install dependencies
@@ -198,20 +191,12 @@ pnpm --filter @workspace/cropmind run dev
 
 ### Deploy to Google Cloud
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete step-by-step instructions.
-
 ```bash
-# Quick deploy
+# Quick deploy via Cloud Build
 gcloud builds submit --config cloudbuild.yaml
 ```
 
-## 🎬 Demo
-
-### Try It Live
-
-Visit [https://cropmind-frontend-XXXXX.run.app](https://cropmind-frontend-XXXXX.run.app)
-
-### Example Queries
+## Example Queries
 
 1. **Rice Disease**: "My rice plants in Punjab have brown spots on leaves and yellowing. Planted 6 weeks ago."
 2. **Tomato Problem**: "Tomato plants in Maharashtra showing wilting despite watering. Stems have dark streaks."
@@ -219,13 +204,13 @@ Visit [https://cropmind-frontend-XXXXX.run.app](https://cropmind-frontend-XXXXX.
 
 ### What You'll See
 
-- **Real-time agent execution** - Watch each agent work
-- **MCP tool calls** - See live API calls to weather, market, subsidy databases
+- **Real-time agent execution** - Watch each ADK agent work via streaming
+- **MCP tool calls** - See live calls to weather API, market DB, subsidy DB
 - **Conflict resolution** - Observe how agents negotiate disagreements
 - **Final recommendation** - Actionable, farmer-friendly advice
-- **Similar cases** - Historical cases with similar symptoms
+- **Similar cases** - Historical pgvector matches with treatment outcomes
 
-## 📈 Impact Potential
+## Impact Potential
 
 ### Target Users
 - **500M+ smallholder farmers** across 10 APAC countries
@@ -236,65 +221,52 @@ Visit [https://cropmind-frontend-XXXXX.run.app](https://cropmind-frontend-XXXXX.
 - **Serverless architecture** - Auto-scales from 0 to 1000s of requests
 - **Cost-effective** - ~$0.002 per diagnosis (Gemini Flash pricing)
 - **Multi-language ready** - Gemini supports 100+ languages
-- **Offline-capable** - Deterministic embedding fallback for low-connectivity areas
 
-### Future Enhancements
-1. **Mobile app** - USSD/SMS interface for feature phones
-2. **Voice input** - Speech-to-text for low-literacy users
-3. **Image diagnosis** - Computer vision for leaf/crop photos
-4. **Regional models** - Fine-tuned Gemini for local crop varieties
-5. **Cooperative integration** - Bulk treatment purchasing, shared equipment
+## Technical Highlights
 
-## 🏗️ Technical Highlights
+### 1. Proper ADK Agent Execution
 
-### 1. Intelligent Agent Orchestration
+Each agent is a real `LlmAgent` executed through ADK's `InMemoryRunner`, not a simple prompt wrapper:
 
 ```typescript
-// Orchestrator decides which agents to invoke based on query context
-const weatherDecision = shouldInvokeWeather(parsedQuery);
-const marketDecision = shouldInvokeMarket(parsedQuery);
+import { LlmAgent, FunctionTool, InMemoryRunner, InMemorySessionService } from "@google/adk";
 
-// Parallel execution for independent agents
-await Promise.all([
-  weatherDecision.invoke ? runWeatherAgent(session) : null,
-  marketDecision.invoke ? runMarketAgent(session) : null,
-]);
+const weatherAgent = new LlmAgent({
+  name: "WeatherAdaptationAgent",
+  model: "gemini-2.5-flash",
+  instruction: SYSTEM_PROMPT,
+  tools: [getWeatherTool, getCropAlertsTool],  // Real FunctionTool bindings
+});
 
-// Conflict resolution with explicit rules
-const conflicts = resolveConflicts(
-  diagnosisResult,
-  weatherResult,
-  marketResult
-);
+const runner = new InMemoryRunner(weatherAgent, { sessionService });
+
+// Agent decides when to call tools — ADK handles the execution loop
+const events = runner.runAsync({ userId, sessionId, newMessage: query });
+for await (const event of events) { /* collect tool calls + final response */ }
 ```
 
-### 2. MCP Tool Abstraction
+### 2. Real MCP Server
+
+Standards-compliant MCP server using `@modelcontextprotocol/sdk` with SSE transport:
 
 ```typescript
-// Clean separation between agents and data sources
-const weatherData = await callTool("WeatherTool", {
-  region: query.region,
-  country: query.country,
-});
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-// Agents receive structured data, not raw API responses
-const agent = await createChatCompletion({
-  model: "gemini-2.5-flash", // Fast agents use 2.5 Flash (GA)
-  messages: [
-    { role: "system", content: AGENT_PROMPT },
-    { role: "user", content: `Weather data: ${JSON.stringify(weatherData)}` },
-  ],
+const server = new McpServer({ name: "cropmind-agricultural-tools", version: "1.0.0" });
+
+server.tool("get_weather", "Fetches weather for APAC regions", schema, async (params) => {
+  const data = await fetchFromOpenMeteo(params);
+  return { content: [{ type: "text", text: JSON.stringify(data) }] };
 });
+// Accessible at /api/mcp/sse for any MCP client
 ```
 
 ### 3. Hybrid Vector Search
 
 ```typescript
 // 60% semantic similarity + 40% treatment outcome
-const weightedScore = 
-  similarityScore * 0.6 + outcomeScore * 0.4;
+const weightedScore = similarityScore * 0.6 + outcomeScore * 0.4;
 
-// Filters by crop type and country
 const results = await searchSimilarCases({
   symptomsDescription: query,
   cropType: "rice",
@@ -303,32 +275,16 @@ const results = await searchSimilarCases({
 });
 ```
 
-## 🤝 Contributing
+## License
 
-This is a hackathon submission, but we welcome feedback and suggestions!
+MIT License
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+## Acknowledgments
 
-## 📄 License
-
-MIT License - see [LICENSE](./LICENSE) for details
-
-## 🙏 Acknowledgments
-
-- **Google Cloud** for Vertex AI and Cloud Run infrastructure
+- **Google Cloud** for Vertex AI, ADK, and Cloud Run infrastructure
 - **Open-Meteo** for free agricultural weather API
 - **FAO** for crop disease reference data
-- **APAC agricultural extension services** for validation support
-
-## 📞 Contact
-
-- **Team**: CropMind APAC
-- **Email**: contact@cropmind.dev
-- **Demo**: [https://cropmind-frontend-XXXXX.run.app](https://cropmind-frontend-XXXXX.run.app)
 
 ---
 
-**Built for Google Cloud Hackathon 2026** | Track 1: Build and Deploy AI Agents using ADK
+**Built for Google Gen AI Academy APAC 2026** | Track 1: Build and Deploy AI Agents using ADK

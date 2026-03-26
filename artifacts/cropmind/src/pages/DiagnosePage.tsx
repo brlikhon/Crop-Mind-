@@ -40,7 +40,7 @@ export default function DiagnosePage() {
     }
   }, []);
 
-  const handleDiagnose = async (query: string) => {
+  const handleDiagnose = async (query: string, image?: File) => {
     setHasStarted(true);
     setIsStreaming(true);
     setLiveTraces([]);
@@ -73,7 +73,7 @@ export default function DiagnosePage() {
           setIsStreaming(false);
           setHasStarted(false);
         },
-      });
+      }, image);
     } catch (err) {
       toast({
         title: "Diagnosis Failed",
