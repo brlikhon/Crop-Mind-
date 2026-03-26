@@ -58,7 +58,8 @@ export const vertexAI = new VertexAI({
 });
 
 export const geminiModel = vertexAI.getGenerativeModel({
-  model: 'gemini-1.5-flash', // or gemini-1.5-pro for better quality
+  model: 'gemini-2.5-flash', // Fast and cost-effective (GA)
+  // Use 'gemini-2.5-pro' for highest quality
 });
 
 // Wrapper for OpenAI-compatible interface
@@ -124,7 +125,7 @@ const vertexAI = new VertexAI({
 
 async function callVertexEmbeddings(text: string): Promise<number[]> {
   const model = vertexAI.preview.getGenerativeModel({
-    model: 'text-embedding-004', // or textembedding-gecko@003
+    model: 'gemini-embedding-001', // Latest GA embedding model
   });
 
   const result = await model.embedContent({

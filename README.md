@@ -279,7 +279,7 @@ const weatherData = await callTool("WeatherTool", {
 
 // Agents receive structured data, not raw API responses
 const agent = await createChatCompletion({
-  model: "gemini-1.5-flash-002",
+  model: "gemini-2.5-flash", // Fast agents use 2.5 Flash (GA)
   messages: [
     { role: "system", content: AGENT_PROMPT },
     { role: "user", content: `Weather data: ${JSON.stringify(weatherData)}` },

@@ -11,7 +11,8 @@ export const vertexAI = new VertexAI({
 });
 
 // Model configuration
-const DEFAULT_MODEL = 'gemini-1.5-flash-002'; // Fast and cost-effective
+const DEFAULT_MODEL = 'gemini-2.5-flash'; // Fast and cost-effective (GA since June 2025)
+const ORCHESTRATOR_MODEL = 'gemini-2.5-pro'; // Highest quality for synthesis
 
 /**
  * OpenAI-compatible message interface for easy migration
@@ -138,12 +139,13 @@ export async function createChatCompletion(
 }
 
 /**
- * Generate embeddings using Vertex AI Text Embeddings API
+ * Generate embeddings using Vertex AI gemini-embedding-001
+ * Uses MRL (Matryoshka Representation Learning) with 768 dimensions for efficiency
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   try {
     const response = await fetch(
-      `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/text-embedding-004:predict`,
+      `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/gemini-embedding-001:predict`,
       {
         method: 'POST',
         headers: {
@@ -151,16 +153,30 @@ export async function generateEmbedding(text: string): Promise<number[]> {
           'Authorization': `Bearer ${await getAccessToken()}`,
         },
         body: JSON.stringify({
-          instances: [{ content: text }],
+          instances: [{ 
+            content: text,
+            task_type: 'RETRIEVAL_DOCUMENT' // Optimized for semantic search
+          }],
+          parameters: {
+            outputDimensionality: 768 // MRL: 768 for efficiency, 1536 for balance, 3072 for max quality
+          }
         }),
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Vertex AI embedding API returned ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Vertex AI embedding API returned ${response.status}: ${errorText}`);
     }
 
-    const data = await response.json() as { predictions?: Array<{ embeddings?: { values?: number[] } }> };
+    const data = await response.json() as { 
+      predictions?: Array<{ 
+        embeddings?: { 
+          values?: number[] 
+        } 
+      }> 
+    };
+    
     const embedding = data.predictions?.[0]?.embeddings?.values || [];
     
     if (embedding.length === 0) {
@@ -252,4 +268,5 @@ export const config = {
   projectId,
   location,
   defaultModel: DEFAULT_MODEL,
+  orchestratorModel: ORCHESTRATOR_MODEL,
 };

@@ -1,8 +1,8 @@
 import { generateEmbedding as generateVertexEmbedding } from "@workspace/integrations-google-vertex-ai-server";
 
-export const EMBEDDING_DIMENSIONS = 768; // text-embedding-004 uses 768 dimensions
+export const EMBEDDING_DIMENSIONS = 768; // gemini-embedding-001 with MRL outputDimensionality=768
 
-const EMBEDDING_MODEL = "text-embedding-004";
+const EMBEDDING_MODEL = "gemini-embedding-001";
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
 

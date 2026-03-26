@@ -287,7 +287,7 @@ export default function ArchitecturePage() {
           <div className="border-t pt-6 mt-6">
             <h3 className="font-bold text-foreground text-lg mb-3">Tech Stack</h3>
             <div className="flex flex-wrap gap-2">
-              {["TypeScript", "Node.js", "Express", "React", "Vite", "TailwindCSS", "Framer Motion", "Vertex AI Gemini 1.5 Flash", "text-embedding-004", "Cloud Run", "PostgreSQL", "pgvector", "Drizzle ORM", "React Query", "SSE Streaming"].map(tech => (
+              {["TypeScript", "Node.js", "Express", "React", "Vite", "TailwindCSS", "Framer Motion", "Gemini 2.5 Flash", "Gemini 2.5 Pro", "gemini-embedding-001", "Cloud SQL PostgreSQL", "pgvector", "Drizzle ORM", "React Query", "SSE Streaming", "Cloud Run"].map(tech => (
                 <span key={tech} className="text-xs bg-muted px-2.5 py-1 rounded-full font-medium">{tech}</span>
               ))}
             </div>

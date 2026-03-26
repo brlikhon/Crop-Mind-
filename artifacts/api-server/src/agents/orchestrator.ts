@@ -1,5 +1,5 @@
 import { createChatCompletion } from "@workspace/integrations-google-vertex-ai-server";
-import { AGENT_MODEL, ORCHESTRATOR_MAX_TOKENS } from "./config.js";
+import { AGENT_MODEL, ORCHESTRATOR_MODEL, ORCHESTRATOR_MAX_TOKENS } from "./config.js";
 import type {
   FarmerQuery,
   OrchestratorResult,
@@ -38,7 +38,7 @@ interface ParsedQuery extends FarmerQuery {
 
 async function parseQuery(rawQuery: string): Promise<ParsedQuery> {
   const response = await createChatCompletion({
-    model: AGENT_MODEL,
+    model: ORCHESTRATOR_MODEL, // Use Pro model for highest quality parsing
     max_completion_tokens: ORCHESTRATOR_MAX_TOKENS,
     messages: [
       { role: "system", content: PARSE_PROMPT },
@@ -409,7 +409,7 @@ export async function runOrchestrator(rawQuery: string, onEvent?: (event: Orches
   emit({ type: "synthesis_started" });
 
   const synthesisResponse = await createChatCompletion({
-    model: AGENT_MODEL,
+    model: ORCHESTRATOR_MODEL, // Use Pro model for highest quality synthesis
     max_completion_tokens: ORCHESTRATOR_MAX_TOKENS,
     messages: [
       { role: "system", content: SYNTHESIS_PROMPT },
