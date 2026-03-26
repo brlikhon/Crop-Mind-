@@ -1,4 +1,4 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { createChatCompletion } from "@workspace/integrations-google-vertex-ai-server";
 import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
 import type { AgentSession, AgentFinding, TreatmentProtocol } from "./types.js";
 
@@ -40,7 +40,7 @@ ${findingsSummary}
 
 Create a practical, step-by-step treatment plan that accounts for the diagnosis, weather conditions, and economic factors identified by the other agents.`;
 
-  const response = await openai.chat.completions.create({
+  const response = await createChatCompletion({
     model: AGENT_MODEL,
     max_completion_tokens: AGENT_MAX_TOKENS,
     messages: [

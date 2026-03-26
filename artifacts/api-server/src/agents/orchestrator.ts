@@ -1,4 +1,4 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { createChatCompletion } from "@workspace/integrations-google-vertex-ai-server";
 import { AGENT_MODEL, ORCHESTRATOR_MAX_TOKENS } from "./config.js";
 import type {
   FarmerQuery,
@@ -37,7 +37,7 @@ interface ParsedQuery extends FarmerQuery {
 }
 
 async function parseQuery(rawQuery: string): Promise<ParsedQuery> {
-  const response = await openai.chat.completions.create({
+  const response = await createChatCompletion({
     model: AGENT_MODEL,
     max_completion_tokens: ORCHESTRATOR_MAX_TOKENS,
     messages: [
@@ -408,7 +408,7 @@ export async function runOrchestrator(rawQuery: string, onEvent?: (event: Orches
 
   emit({ type: "synthesis_started" });
 
-  const synthesisResponse = await openai.chat.completions.create({
+  const synthesisResponse = await createChatCompletion({
     model: AGENT_MODEL,
     max_completion_tokens: ORCHESTRATOR_MAX_TOKENS,
     messages: [

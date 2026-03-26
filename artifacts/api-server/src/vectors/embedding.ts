@@ -1,8 +1,8 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { generateEmbedding as generateVertexEmbedding } from "@workspace/integrations-google-vertex-ai-server";
 
-export const EMBEDDING_DIMENSIONS = 1536;
+export const EMBEDDING_DIMENSIONS = 768; // text-embedding-004 uses 768 dimensions
 
-const EMBEDDING_MODEL = "text-embedding-3-small";
+const EMBEDDING_MODEL = "text-embedding-004";
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
 
@@ -18,28 +18,25 @@ export function getEmbeddingMode(): "ai" | "deterministic" {
 async function checkEmbeddingsApi(): Promise<boolean> {
   if (_embeddingsApiAvailable !== null) return _embeddingsApiAvailable;
   try {
-    const response = await openai.embeddings.create({
-      model: EMBEDDING_MODEL,
-      input: "probe",
-    });
-    if (response.data?.[0]?.embedding?.length > 0) {
+    const embedding = await generateVertexEmbedding("probe");
+    if (embedding.length > 0) {
       _embeddingsApiAvailable = true;
       _embeddingMode = "ai";
-      console.log(`[embedding] OpenAI embeddings API available (${EMBEDDING_MODEL}, dim=${response.data[0].embedding.length})`);
+      console.log(`[embedding] Vertex AI embeddings API available (${EMBEDDING_MODEL}, dim=${embedding.length})`);
       return true;
     }
-  } catch {
+  } catch (err) {
     _embeddingsApiAvailable = false;
     _embeddingMode = "deterministic";
     if (STRICT_AI_MODE) {
       throw new Error(
-        `[embedding] FATAL: OpenAI embeddings API not available and EMBEDDING_STRICT_AI=true. ` +
-        `The Replit AI Integrations proxy does not expose POST /embeddings. ` +
-        `Set EMBEDDING_STRICT_AI=false or provide a direct OpenAI API key to use deterministic fallback.`
+        `[embedding] FATAL: Vertex AI embeddings API not available and EMBEDDING_STRICT_AI=true. ` +
+        `Ensure GOOGLE_CLOUD_PROJECT and credentials are configured. ` +
+        `Set EMBEDDING_STRICT_AI=false to use deterministic fallback.`
       );
     }
     console.warn(
-      `[embedding] OpenAI embeddings API endpoint not supported by Replit AI Integrations proxy. ` +
+      `[embedding] Vertex AI embeddings API unavailable: ${err instanceof Error ? err.message : String(err)}. ` +
       `Using deterministic text-hash embeddings (word + trigram → ${EMBEDDING_DIMENSIONS}-dim). ` +
       `Set EMBEDDING_STRICT_AI=true to enforce AI-only mode and fail on unavailability.`
     );
@@ -51,22 +48,13 @@ async function callEmbeddingsApiWithRetry(text: string): Promise<number[]> {
   let lastError: unknown;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const response = await openai.embeddings.create({
-        model: EMBEDDING_MODEL,
-        input: text,
-      });
-      return response.data[0].embedding;
+      return await generateVertexEmbedding(text);
     } catch (err: unknown) {
       lastError = err;
-      const status = (err as { status?: number }).status;
-      if (status === 429 || (status !== undefined && status >= 500)) {
-        const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
-        const jitter = Math.random() * backoff * 0.1;
-        console.log(`[embedding] Retry ${attempt + 1}/${MAX_RETRIES} after ${Math.round(backoff + jitter)}ms (status ${status})`);
-        await new Promise((resolve) => setTimeout(resolve, backoff + jitter));
-        continue;
-      }
-      throw new Error(`[embedding] Non-retryable error from embeddings API: ${(err as Error).message}`);
+      const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+      const jitter = Math.random() * backoff * 0.1;
+      console.log(`[embedding] Retry ${attempt + 1}/${MAX_RETRIES} after ${Math.round(backoff + jitter)}ms`);
+      await new Promise((resolve) => setTimeout(resolve, backoff + jitter));
     }
   }
   throw new Error(`[embedding] Exhausted ${MAX_RETRIES} retries for embeddings API: ${(lastError as Error).message}`);

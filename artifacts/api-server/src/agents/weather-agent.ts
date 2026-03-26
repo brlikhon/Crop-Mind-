@@ -1,4 +1,4 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { createChatCompletion } from "@workspace/integrations-google-vertex-ai-server";
 import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
 import { callTool } from "../mcp/registry.js";
 import type { AgentSession, AgentFinding, WeatherAssessment, McpToolCallEntry } from "./types.js";
@@ -79,7 +79,7 @@ ${weatherContext}${alertContext}
 
 Analyze how the actual weather conditions affect this crop condition and treatment timing.`;
 
-  const response = await openai.chat.completions.create({
+  const response = await createChatCompletion({
     model: AGENT_MODEL,
     max_completion_tokens: AGENT_MAX_TOKENS,
     messages: [

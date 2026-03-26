@@ -1,4 +1,4 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { createChatCompletion } from "@workspace/integrations-google-vertex-ai-server";
 import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
 import type { AgentSession, AgentFinding, DiagnosisResult } from "./types.js";
 
@@ -31,7 +31,7 @@ export async function runCropDiseaseAgent(session: AgentSession): Promise<AgentF
 - Additional context: ${query.additionalContext}
 - Original farmer description: "${query.rawQuery}"`;
 
-  const response = await openai.chat.completions.create({
+  const response = await createChatCompletion({
     model: AGENT_MODEL,
     max_completion_tokens: AGENT_MAX_TOKENS,
     messages: [

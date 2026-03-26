@@ -1,4 +1,4 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { createChatCompletion } from "@workspace/integrations-google-vertex-ai-server";
 import { AGENT_MODEL, AGENT_MAX_TOKENS } from "./config.js";
 import { callTool } from "../mcp/registry.js";
 import type { AgentSession, AgentFinding, MarketIntelligence, McpToolCallEntry } from "./types.js";
@@ -78,7 +78,7 @@ ${priceContext}${subsidyContext}
 
 Advise on the economic viability of treatment vs replanting based on the actual market data and available subsidies.`;
 
-  const response = await openai.chat.completions.create({
+  const response = await createChatCompletion({
     model: AGENT_MODEL,
     max_completion_tokens: AGENT_MAX_TOKENS,
     messages: [

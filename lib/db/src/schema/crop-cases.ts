@@ -14,7 +14,7 @@ export const cropCasesTable = pgTable("crop_cases", {
   treatmentApplied: text("treatment_applied").notNull(),
   outcomeScore: real("outcome_score").notNull(),
   resolvedAt: timestamp("resolved_at").notNull(),
-  embedding: vector("embedding", { dimensions: 1536 }).notNull(),
+  embedding: vector("embedding", { dimensions: 768 }).notNull(),
 }, (table) => [
   index("crop_cases_crop_type_idx").on(table.cropType),
   index("crop_cases_country_idx").on(table.country),
