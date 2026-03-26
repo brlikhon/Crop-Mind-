@@ -264,7 +264,7 @@ export default function ArchitecturePage() {
                   gcloud run deploy cropmind-api --image gcr.io/$PROJECT_ID/cropmind-api \<br/>
                   &nbsp;&nbsp;--region asia-southeast1 --allow-unauthenticated \<br/>
                   &nbsp;&nbsp;--set-env-vars DATABASE_URL=$ALLOYDB_URL \<br/>
-                  &nbsp;&nbsp;--set-env-vars OPENAI_API_KEY=$KEY \<br/>
+                  &nbsp;&nbsp;--set-env-vars GOOGLE_CLOUD_PROJECT=$PROJECT_ID \<br/>
                   &nbsp;&nbsp;--add-cloudsql-instances $ALLOYDB_CONNECTION_NAME
                 </code>
               </div>
@@ -287,7 +287,7 @@ export default function ArchitecturePage() {
           <div className="border-t pt-6 mt-6">
             <h3 className="font-bold text-foreground text-lg mb-3">Tech Stack</h3>
             <div className="flex flex-wrap gap-2">
-              {["TypeScript", "Node.js", "Express", "React", "Vite", "TailwindCSS", "Framer Motion", "OpenAI GPT-4o-mini", "PostgreSQL", "pgvector", "Drizzle ORM", "React Query", "SSE Streaming"].map(tech => (
+              {["TypeScript", "Node.js", "Express", "React", "Vite", "TailwindCSS", "Framer Motion", "Vertex AI Gemini 1.5 Flash", "text-embedding-004", "Cloud Run", "PostgreSQL", "pgvector", "Drizzle ORM", "React Query", "SSE Streaming"].map(tech => (
                 <span key={tech} className="text-xs bg-muted px-2.5 py-1 rounded-full font-medium">{tech}</span>
               ))}
             </div>

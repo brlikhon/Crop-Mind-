@@ -15,6 +15,7 @@
     "@workspace/integrations-google-vertex-ai-server": "workspace:*",
     "drizzle-orm": "catalog:",
     "express": "^5",
+    "express-rate-limit": "^7.5.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2"
   },

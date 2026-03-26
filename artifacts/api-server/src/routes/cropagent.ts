@@ -1,9 +1,21 @@
 import { Router, type IRouter } from "express";
+import rateLimit from "express-rate-limit";
 import { runOrchestrator, type OrchestratorEvent } from "../agents/orchestrator.js";
 
 const router: IRouter = Router();
 
-router.post("/cropagent/diagnose", async (req, res) => {
+// Rate limiter: 5 requests per minute per IP
+const diagnoseLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // 5 requests per window
+  message: {
+    error: "Too many diagnosis requests. Please wait a minute before trying again.",
+  },
+  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+  legacyHeaders: false, // Disable `X-RateLimit-*` headers
+});
+
+router.post("/cropagent/diagnose", diagnoseLimiter, async (req, res) => {
   const { query } = req.body;
 
   if (!query || typeof query !== "string" || query.trim().length === 0) {
@@ -31,7 +43,7 @@ router.post("/cropagent/diagnose", async (req, res) => {
   }
 });
 
-router.post("/cropagent/diagnose/stream", async (req, res) => {
+router.post("/cropagent/diagnose/stream", diagnoseLimiter, async (req, res) => {
   const { query } = req.body;
 
   if (!query || typeof query !== "string" || query.trim().length === 0) {

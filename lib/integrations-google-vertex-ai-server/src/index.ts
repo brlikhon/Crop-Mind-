@@ -12,7 +12,6 @@ export const vertexAI = new VertexAI({
 
 // Model configuration
 const DEFAULT_MODEL = 'gemini-1.5-flash-002'; // Fast and cost-effective
-const FALLBACK_MODEL = 'gemini-1.5-pro-002'; // Higher quality if needed
 
 /**
  * OpenAI-compatible message interface for easy migration
@@ -140,13 +139,60 @@ export async function createChatCompletion(
 
 /**
  * Generate embeddings using Vertex AI Text Embeddings API
- * Note: This is a placeholder - actual implementation requires @google-cloud/aiplatform
- * For now, we'll throw an error to trigger the deterministic fallback
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  // TODO: Implement actual Vertex AI embeddings when deployed to Google Cloud
-  // For local development, this will trigger the deterministic fallback
-  throw new Error('Vertex AI embeddings not available in local development. Use deterministic fallback or deploy to Google Cloud.');
+  try {
+    const response = await fetch(
+      `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/text-embedding-004:predict`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await getAccessToken()}`,
+        },
+        body: JSON.stringify({
+          instances: [{ content: text }],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Vertex AI embedding API returned ${response.status}`);
+    }
+
+    const data = await response.json() as { predictions?: Array<{ embeddings?: { values?: number[] } }> };
+    const embedding = data.predictions?.[0]?.embeddings?.values || [];
+    
+    if (embedding.length === 0) {
+      throw new Error('No embedding values returned from Vertex AI');
+    }
+
+    return embedding;
+  } catch (error) {
+    console.error('[Vertex AI] Error generating embedding:', error);
+    throw new Error(
+      `Vertex AI embedding failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+/**
+ * Get access token for Vertex AI API calls
+ */
+async function getAccessToken(): Promise<string> {
+  // In Cloud Run, this will use the service account automatically
+  // For local development, use gcloud auth application-default login
+  try {
+    const { GoogleAuth } = await import('google-auth-library');
+    const auth = new GoogleAuth({
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+    });
+    const client = await auth.getClient();
+    const token = await client.getAccessToken();
+    return token.token || '';
+  } catch (error) {
+    throw new Error('Failed to get access token. Run: gcloud auth application-default login');
+  }
 }
 
 /**

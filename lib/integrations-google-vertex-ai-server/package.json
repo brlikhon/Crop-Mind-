@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@google-cloud/vertexai": "^1.7.0"
+    "@google-cloud/vertexai": "^1.7.0",
+    "google-auth-library": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
