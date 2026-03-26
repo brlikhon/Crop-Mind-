@@ -6,7 +6,7 @@ const EMBEDDING_MODEL = "gemini-embedding-001";
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
 
-const STRICT_AI_MODE = process.env.EMBEDDING_STRICT_AI === "true";
+const STRICT_AI_MODE = process.env.EMBEDDING_STRICT_AI !== "false"; // Default to TRUE - fail if Vertex AI unavailable
 
 let _embeddingsApiAvailable: boolean | null = null;
 let _embeddingMode: "ai" | "deterministic" = "deterministic";

@@ -46,9 +46,9 @@ export default function ArchitecturePage() {
 
           <motion.div variants={itemVariants} className="w-full bg-gradient-to-br from-primary to-primary/80 border-primary rounded-xl p-6 flex flex-col items-center shadow-lg shadow-primary/20 z-10 text-primary-foreground relative">
             <BrainCircuit className="w-10 h-10 mb-3" />
-            <h3 className="font-bold text-lg mb-1">2. ADK Orchestrator</h3>
+            <h3 className="font-bold text-lg mb-1">2. Vertex AI Orchestrator</h3>
             <p className="text-sm text-primary-foreground/80 text-center max-w-md">
-              Parses intent, conditionally routes to sub-agents, resolves conflicting advice (e.g. moisture vs fungal risk), synthesizes final output.
+              Parses intent, conditionally routes to sub-agents, resolves conflicting advice (e.g. moisture vs fungal risk), synthesizes final output using Gemini 2.5 Pro.
             </p>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-8">
@@ -142,7 +142,7 @@ export default function ArchitecturePage() {
           <ul className="mt-4 space-y-3">
             <li className="flex items-start gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
-              <span className="text-sm text-foreground"><strong className="text-primary">ADK Orchestration:</strong> A multi-agent framework that breaks complex agronomic reasoning into specialized roles (disease, weather, market, treatment) and resolves conflicts automatically.</span>
+              <span className="text-sm text-foreground"><strong className="text-primary">Multi-Agent Orchestration:</strong> A custom multi-agent framework built on Vertex AI that breaks complex agronomic reasoning into specialized roles (disease, weather, market, treatment) and resolves conflicts automatically.</span>
             </li>
             <li className="flex items-start gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-secondary mt-2"></div>
@@ -222,8 +222,8 @@ export default function ArchitecturePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
             <div className="border rounded-lg p-4 bg-primary/5">
-              <h4 className="font-bold text-foreground text-sm mb-2">Track 1: ADK Multi-Agent</h4>
-              <p className="text-xs">Orchestrator with 4 specialized sub-agents (CropDisease, Weather, Market, Treatment). Supports conflict resolution and synthesis.</p>
+              <h4 className="font-bold text-foreground text-sm mb-2">Track 1: Vertex AI Multi-Agent</h4>
+              <p className="text-xs">Custom orchestrator with 4 specialized sub-agents (CropDisease, Weather, Market, Treatment) built on Gemini 2.5 Flash/Pro. Supports conflict resolution and synthesis.</p>
             </div>
             <div className="border rounded-lg p-4 bg-secondary/5">
               <h4 className="font-bold text-foreground text-sm mb-2">Track 2: MCP Tool Servers</h4>

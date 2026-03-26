@@ -81,7 +81,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </main>
       
       <footer className="py-6 border-t border-border/50 text-center text-sm text-muted-foreground relative z-10">
-        <p>Powered by Google Cloud Gen AI Academy APAC 2026 • ADK + MCP + AlloyDB</p>
+        <p>Powered by Google Cloud Gen AI Academy APAC 2026 • Vertex AI + MCP Tools + AlloyDB pgvector</p>
       </footer>
     </div>
   );
