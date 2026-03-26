@@ -1,69 +1,51 @@
-# Multi-stage build for CropMind API Server
-# Optimized for Google Cloud Run deployment
+# Multi-stage build for CropMind (API + Frontend)
+# Single Cloud Run service serving both
 
 FROM node:24-slim AS base
 
-# Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Set working directory
 WORKDIR /app
 
-# Copy workspace configuration
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY tsconfig.base.json tsconfig.json ./
 
 # ============================================
-# Builder stage - install deps & build
+# Builder - install deps, build API + frontend
 # ============================================
 FROM base AS builder
 
-# Copy all source code
 COPY . .
-
-# Install all dependencies
 RUN pnpm install --frozen-lockfile
-
-# Build the API server
 RUN pnpm --filter @workspace/api-server run build
+RUN pnpm --filter @workspace/cropmind run build
 
 # ============================================
-# Deploy stage - use pnpm deploy to create a pruned standalone copy
-# ============================================
-FROM builder AS deployer
-
-RUN pnpm --filter @workspace/api-server deploy --legacy --prod /app/deployed
-
-# ============================================
-# Runner stage - final production image
+# Runner - minimal production image
 # ============================================
 FROM node:24-slim AS runner
 
 WORKDIR /app
 
-# Set production environment
 ENV NODE_ENV=production
 ENV PORT=8080
 ENV GOOGLE_GENAI_USE_VERTEXAI=true
 
-# Copy the deployed standalone package with its pruned node_modules
-COPY --from=deployer /app/deployed/node_modules ./node_modules
-COPY --from=deployer /app/deployed/package.json ./
-
-# Copy built application from builder stage
+# Copy API bundle
 COPY --from=builder /app/artifacts/api-server/dist ./dist
 
-# Create non-root user for security
+# Copy frontend static files
+COPY --from=builder /app/artifacts/cropmind/dist/public ./public
+
+# Install only the runtime external dependencies (not bundled by esbuild)
+RUN npm init -y && npm install --no-save @google/adk@0.5.0 @modelcontextprotocol/sdk@1.27.1
+
 RUN groupadd -r cropmind && useradd -r -g cropmind cropmind
 RUN chown -R cropmind:cropmind /app
 USER cropmind
 
-# Expose port
 EXPOSE 8080
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:8080/api/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
-# Start the server
 CMD ["node", "dist/index.cjs"]

@@ -1,5 +1,5 @@
 # Google Cloud Build configuration for CropMind
-# Builds and deploys API server to Cloud Run
+# Builds and deploys API server to Cloud Run with AlloyDB
 
 steps:
   # Step 1: Build the Docker image
@@ -31,7 +31,7 @@ steps:
     id: 'push-latest'
     waitFor: ['build-image']
 
-  # Step 4: Deploy to Cloud Run
+  # Step 4: Deploy to Cloud Run with Direct VPC Egress to reach AlloyDB
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -55,8 +55,14 @@ steps:
       - '0'
       - '--timeout'
       - '300'
+      - '--network'
+      - 'default'
+      - '--subnet'
+      - 'default'
+      - '--vpc-egress'
+      - 'private-ranges-only'
       - '--set-env-vars'
-      - 'NODE_ENV=production,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=true'
+      - 'NODE_ENV=production,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=true,EMBEDDING_STRICT_AI=false'
       - '--set-secrets'
       - 'DATABASE_URL=cropmind-database-url:latest'
     id: 'deploy-cloud-run'
