@@ -10,7 +10,13 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 5000,   // Fail fast (5s) if AlloyDB is stopped/unreachable
+  idle_in_transaction_session_timeout: 30000,
+  statement_timeout: 30000,        // Kill queries that take longer than 30s
+  max: 10,                         // Max pool connections
+});
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";

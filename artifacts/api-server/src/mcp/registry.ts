@@ -25,7 +25,11 @@ export function getTool(name: string): McpTool | undefined {
   return tools.get(name);
 }
 
+/** Hard timeout for any MCP tool call — prevents DB connection hangs from blocking agents. */
+const TOOL_TIMEOUT_MS = 10_000;
+
 export async function callTool(toolName: string, params: Record<string, unknown>): Promise<McpToolResult> {
+  const start = Date.now();
   const tool = tools.get(toolName);
   if (!tool) {
     return {
@@ -37,7 +41,23 @@ export async function callTool(toolName: string, params: Record<string, unknown>
     };
   }
 
-  const result = await tool.call(params);
+  let result: McpToolResult;
+  try {
+    result = await Promise.race([
+      tool.call(params),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Tool '${toolName}' timed out after ${TOOL_TIMEOUT_MS}ms (database may be unavailable)`)), TOOL_TIMEOUT_MS)
+      ),
+    ]);
+  } catch (err) {
+    result = {
+      toolName,
+      success: false,
+      data: null,
+      error: err instanceof Error ? err.message : String(err),
+      durationMs: Date.now() - start,
+    };
+  }
 
   const logEntry: McpToolCallLog = {
     toolName,
