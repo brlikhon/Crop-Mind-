@@ -11,7 +11,7 @@ steps:
       - '-t'
       - 'gcr.io/$PROJECT_ID/cropmind-api:latest'
       - '-f'
-      - 'artifacts/api-server/Dockerfile'
+      - 'Dockerfile'
       - '.'
     id: 'build-image'
 
