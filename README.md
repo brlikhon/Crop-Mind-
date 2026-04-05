@@ -8,7 +8,8 @@
 
 | Resource | URL |
 |----------|-----|
-| **Repository** | [github.com/brlikhon/CropMind](https://github.com/brlikhon/CropMind) |
+| **Repository (submission)** | [github.com/brlikhon/Crop-Mind-](https://github.com/brlikhon/Crop-Mind-) |
+| **Repository (full history)** | [github.com/brlikhon/CropMind](https://github.com/brlikhon/CropMind) |
 | **Live app (Cloud Run)** | [cropmind-api — us-central1](https://cropmind-api-16140643786.us-central1.run.app/) |
 | **Health check** | [`GET /api/healthz`](https://cropmind-api-16140643786.us-central1.run.app/api/healthz) |
 
@@ -197,8 +198,8 @@ cropmind/
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/brlikhon/CropMind.git
-cd CropMind
+git clone https://github.com/brlikhon/Crop-Mind-.git
+cd Crop-Mind-
 
 # 2. Install dependencies
 pnpm install
@@ -227,7 +228,7 @@ pnpm --filter @workspace/cropmind run dev
 gcloud builds submit --config cloudbuild.yaml
 ```
 
-See `DEPLOYMENT.md` and `INFRASTRUCTURE.md` for VPC, secrets, and operations.
+Configure **VPC egress**, **Secret Manager** (`DATABASE_URL`), and **service account** access to Vertex AI in the Google Cloud console for production; `cloudbuild.yaml` deploys the root `Dockerfile` to Cloud Run.
 
 ## Example Queries
 

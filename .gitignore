@@ -44,6 +44,18 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
-# Replit
+# Replit / local tooling (not required for build)
+.replit
+.replitignore
 .cache/
 .local/
+attached_assets/
+
+# Root-level drafts and internal notes (keep a single README at repo root)
+/PRESENTATION*.md
+/SLIDE*.md
+/*CHECKLIST*.md
+/VERIFICATION*.md
+/INFRASTRUCTURE_ACCURACY*.md
+/plan.md
+/replit.md
