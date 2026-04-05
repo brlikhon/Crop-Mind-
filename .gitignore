@@ -11,7 +11,7 @@ out-tsc
 # dependencies
 node_modules
 
-# IDEs and editors
+# IDEs and editors (do not commit — local only)
 /.idea
 .project
 .classpath
@@ -19,13 +19,9 @@ node_modules
 *.launch
 .settings/
 *.sublime-workspace
-
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/
+.cursor/
+*.code-workspace
 
 # misc
 /.sass-cache
@@ -41,8 +37,6 @@ testem.log
 .DS_Store
 Thumbs.db
 
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
 
 # Replit / local tooling (not required for build)
 .replit
