@@ -5,6 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
 import DiagnosePage from "@/pages/DiagnosePage";
 import ArchitecturePage from "@/pages/ArchitecturePage";
+import OfficerDashboardPage from "@/pages/OfficerDashboardPage";
+import ImpactDashboardPage from "@/pages/ImpactDashboardPage";
+import DemoRoomPage from "@/pages/DemoRoomPage";
 import NotFound from "@/pages/not-found";
 
 // Use a configured query client
@@ -22,6 +25,9 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={DiagnosePage} />
+        <Route path="/officer" component={OfficerDashboardPage} />
+        <Route path="/impact" component={ImpactDashboardPage} />
+        <Route path="/demo" component={DemoRoomPage} />
         <Route path="/architecture" component={ArchitecturePage} />
         <Route component={NotFound} />
       </Switch>

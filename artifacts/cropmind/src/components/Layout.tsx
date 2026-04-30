@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Leaf, Network, Activity } from "lucide-react";
+import { Leaf, Network, Activity, RadioTower, BarChart3, Sparkles } from "lucide-react";
 import { useHealthCheck } from "@/hooks/use-api";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -65,6 +65,42 @@ export function Layout({ children }: { children: ReactNode }) {
               <Network className="w-4 h-4" />
               <span className="hidden sm:inline">Architecture</span>
             </Link>
+            <Link
+              href="/officer"
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2",
+                location === "/officer"
+                  ? "bg-white shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/50"
+              )}
+            >
+              <RadioTower className="w-4 h-4" />
+              <span className="hidden sm:inline">Officer</span>
+            </Link>
+            <Link
+              href="/impact"
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2",
+                location === "/impact"
+                  ? "bg-white shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/50"
+              )}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Impact</span>
+            </Link>
+            <Link
+              href="/demo"
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2",
+                location === "/demo"
+                  ? "bg-white shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/50"
+              )}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden sm:inline">Demo</span>
+            </Link>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -81,7 +117,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </main>
       
       <footer className="py-6 border-t border-border/50 text-center text-sm text-muted-foreground relative z-10">
-        <p>Powered by Google Cloud Gen AI Academy APAC 2026 • Vertex AI + MCP Tools + AlloyDB pgvector</p>
+        <p>Powered by Google Cloud Gen AI Academy APAC 2026 - Vertex AI + ADK + MCP + Google Search Grounding</p>
       </footer>
     </div>
   );

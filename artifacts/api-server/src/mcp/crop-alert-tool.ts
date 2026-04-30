@@ -1,6 +1,24 @@
-import { db, cropAlertsTable } from "@workspace/db";
-import { eq, and, ilike, type SQL } from "drizzle-orm";
 import type { McpTool, McpToolResult, McpToolSchema } from "./types.js";
+import alertsData from "../data/crop-alerts.json" with { type: "json" };
+
+interface CropAlert {
+  alertId: string;
+  cropType: string;
+  region: string;
+  country: string;
+  threatType: string;
+  threatName: string;
+  severity: string;
+  description: string;
+  advisoryText: string;
+  affectedAreaHa: number | null;
+  reportedDate: string;
+  expiresDate: string | null;
+  isActive: boolean;
+  source: string | null;
+}
+
+const alerts: CropAlert[] = alertsData as CropAlert[];
 
 const schema: McpToolSchema = {
   name: "CropAlertTool",
@@ -19,36 +37,34 @@ async function call(params: Record<string, unknown>): Promise<McpToolResult> {
   const start = Date.now();
 
   try {
-    const conditions: SQL[] = [eq(cropAlertsTable.isActive, true)];
+    let filtered = alerts.filter((a) => a.isActive);
 
     if (typeof params.cropType === "string" && params.cropType.trim()) {
-      conditions.push(ilike(cropAlertsTable.cropType, params.cropType.trim()));
+      const ct = params.cropType.trim().toLowerCase();
+      filtered = filtered.filter((a) => a.cropType.toLowerCase() === ct);
     }
     if (typeof params.region === "string" && params.region.trim()) {
-      conditions.push(ilike(cropAlertsTable.region, `%${params.region.trim()}%`));
+      const r = params.region.trim().toLowerCase();
+      filtered = filtered.filter((a) => a.region.toLowerCase().includes(r));
     }
     if (typeof params.country === "string" && params.country.trim()) {
-      conditions.push(ilike(cropAlertsTable.country, `%${params.country.trim()}%`));
+      const c = params.country.trim().toLowerCase();
+      filtered = filtered.filter((a) => a.country.toLowerCase().includes(c));
     }
-
-    let alerts = await db
-      .select()
-      .from(cropAlertsTable)
-      .where(and(...conditions));
 
     if (typeof params.severity === "string" && severityOrder[params.severity] !== undefined) {
       const minSev = severityOrder[params.severity];
-      alerts = alerts.filter((a) => (severityOrder[a.severity] ?? 0) >= minSev);
+      filtered = filtered.filter((a) => (severityOrder[a.severity] ?? 0) >= minSev);
     }
 
-    alerts.sort((a, b) => (severityOrder[b.severity] ?? 0) - (severityOrder[a.severity] ?? 0));
+    filtered.sort((a, b) => (severityOrder[b.severity] ?? 0) - (severityOrder[a.severity] ?? 0));
 
     return {
       toolName: "CropAlertTool",
       success: true,
       data: {
-        totalAlerts: alerts.length,
-        alerts: alerts.map((a) => ({
+        totalAlerts: filtered.length,
+        alerts: filtered.map((a) => ({
           alertId: a.alertId,
           cropType: a.cropType,
           region: a.region,

@@ -9,7 +9,9 @@
 export interface TreatmentProtocol {
   immediateActions: string[];
   preventiveMeasures: string[];
+  safetyWarnings: string[];
   timelineWeeks: number;
   estimatedCost: string;
   localResources: string[];
+  sources?: string[];
 }

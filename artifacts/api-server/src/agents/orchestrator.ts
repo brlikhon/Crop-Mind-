@@ -82,7 +82,7 @@ interface ParsedQuery extends FarmerQuery {
   queryIntent: string;
 }
 
-async function parseQuery(rawQuery: string): Promise<ParsedQuery> {
+async function parseQuery(rawQuery: string, preferredLanguage: string): Promise<ParsedQuery> {
   let content = "";
   const events = parserRunner.runEphemeral({
     userId: `parser-${Date.now()}`,
@@ -102,6 +102,7 @@ async function parseQuery(rawQuery: string): Promise<ParsedQuery> {
     const parsed = JSON.parse(jsonStr);
     return {
       rawQuery,
+      preferredLanguage,
       cropType: parsed.cropType ?? "unspecified",
       region: parsed.region ?? "unspecified",
       country: parsed.country ?? "unspecified",
@@ -112,6 +113,7 @@ async function parseQuery(rawQuery: string): Promise<ParsedQuery> {
   } catch {
     return {
       rawQuery,
+      preferredLanguage,
       cropType: "unspecified",
       region: "unspecified",
       country: "unspecified",
@@ -306,14 +308,20 @@ export type OrchestratorEvent =
   | { type: "synthesis_started" }
   | { type: "complete"; result: OrchestratorResult };
 
-export async function runOrchestrator(rawQuery: string, onEvent?: (event: OrchestratorEvent) => void, imageData?: ImageInput): Promise<OrchestratorResult> {
+export async function runOrchestrator(
+  rawQuery: string,
+  onEvent?: (event: OrchestratorEvent) => void,
+  imageData?: ImageInput,
+  preferredLanguage = "English"
+): Promise<OrchestratorResult> {
   const emit = onEvent ?? (() => {});
   const startTime = Date.now();
   const decisions: OrchestratorDecision[] = [];
 
-  const parsedQuery = await parseQuery(rawQuery);
+  const parsedQuery = await parseQuery(rawQuery, preferredLanguage);
   const farmerQuery: FarmerQuery = {
     rawQuery: parsedQuery.rawQuery,
+    preferredLanguage: parsedQuery.preferredLanguage,
     cropType: parsedQuery.cropType,
     region: parsedQuery.region,
     country: parsedQuery.country,
@@ -436,7 +444,7 @@ export async function runOrchestrator(rawQuery: string, onEvent?: (event: Orches
     userId: `synthesis-${Date.now()}`,
     newMessage: {
       role: "user",
-      parts: [{ text: `Farmer's question: "${rawQuery}"\n\nAgent findings:\n${findingsSummary}\n\nOrchestrator decisions:\n${decisionsSummary}${conflictsSummary}` }],
+      parts: [{ text: `Farmer's question: "${rawQuery}"\n\nPreferred response language: ${preferredLanguage}. Write the farmer-facing final recommendation in this language while keeping crop names, product names, and source URLs clear.\n\nAgent findings:\n${findingsSummary}\n\nOrchestrator decisions:\n${decisionsSummary}${conflictsSummary}` }],
     },
   });
 

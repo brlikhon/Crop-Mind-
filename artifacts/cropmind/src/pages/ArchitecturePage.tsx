@@ -92,12 +92,12 @@ export default function ArchitecturePage() {
                   <Database className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold">3b. AlloyDB Vector Store</h3>
-                  <p className="text-xs text-muted-foreground">Historical Case Intelligence</p>
+                  <h3 className="font-bold">3b. Embedded APAC Data</h3>
+                  <p className="text-xs text-muted-foreground">Agricultural Intelligence Store</p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                pgvector extension enables cosine similarity search over 550+ historical farmer cases across 10 APAC countries.
+                Curated APAC datasets: 15 crop outbreak alerts, 20 commodity market prices across 10 countries, and 14 government subsidy programs. Optional pgvector for historical case matching.
               </p>
               <div className="bg-muted rounded-lg p-3 text-xs font-mono text-muted-foreground">
                 ORDER BY embedding &lt;=&gt; query_vector<br/>
@@ -150,7 +150,7 @@ export default function ArchitecturePage() {
             </li>
             <li className="flex items-start gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-accent-foreground mt-2"></div>
-              <span className="text-sm text-foreground"><strong className="text-accent-foreground">AlloyDB Vector Intelligence:</strong> Utilizing pgvector to perform semantic similarity searches against a knowledge base of past successful treatments across 10 APAC countries.</span>
+              <span className="text-sm text-foreground"><strong className="text-accent-foreground">Google Search Grounding:</strong> Disease and treatment agents ground their recommendations in real-time agricultural research, citing verifiable sources from extension services and research institutions.</span>
             </li>
           </ul>
         </div>
@@ -184,10 +184,10 @@ export default function ArchitecturePage() {
           <div className="border rounded-xl p-5 bg-background/50">
             <div className="flex items-center gap-2 mb-3">
               <Database className="w-5 h-5 text-secondary" />
-              <h4 className="font-bold text-sm">AlloyDB for PostgreSQL</h4>
+              <h4 className="font-bold text-sm">Embedded Data + Google Search</h4>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Fully managed PostgreSQL-compatible database with pgvector for vector similarity search. Stores MCP tool data (alerts, prices, subsidies) and the 550+ historical case embeddings. Supports cross-region read replicas for APAC-wide low latency.
+              MCP tools serve curated APAC agricultural data (alerts, prices, subsidies) from embedded JSON datasets — zero database required. Disease and treatment agents use Google Search grounding to cite verifiable sources.
             </p>
           </div>
           <div className="border rounded-xl p-5 bg-background/50">
@@ -230,8 +230,8 @@ export default function ArchitecturePage() {
               <p className="text-xs">Standards-compliant MCP server (@modelcontextprotocol/sdk) with SSE transport. 4 tools (Weather, CropAlerts, MarketPrices, Subsidies) accessible by any MCP client.</p>
             </div>
             <div className="border rounded-lg p-4 bg-accent/20">
-              <h4 className="font-bold text-foreground text-sm mb-2">Track 3: AlloyDB pgvector</h4>
-              <p className="text-xs">550+ historical farmer cases across 10 APAC countries with vector embeddings for semantic similarity search.</p>
+              <h4 className="font-bold text-foreground text-sm mb-2">Track 3: Google Search Grounding</h4>
+              <p className="text-xs">Disease and treatment agents use Google Search to ground recommendations in real agricultural research. Every diagnosis cites verifiable sources.</p>
             </div>
           </div>
 
@@ -243,14 +243,13 @@ export default function ArchitecturePage() {
             <div className="space-y-4 text-sm">
               <div className="bg-muted/50 rounded-lg p-4">
                 <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
-                  <GitBranch className="w-4 h-4" /> Step 1: Provision AlloyDB
+                  <GitBranch className="w-4 h-4" /> Step 1: Configure Google Cloud
                 </h4>
-                <p className="text-xs mb-2">Create an AlloyDB for PostgreSQL cluster in your GCP project. Enable the pgvector extension and run the schema migration:</p>
+                <p className="text-xs mb-2">Set up your GCP project with Vertex AI API enabled:</p>
                 <code className="block bg-background border rounded p-2 text-[11px] font-mono">
-                  gcloud alloydb clusters create cropmind-cluster --region=asia-southeast1<br/>
-                  gcloud alloydb instances create cropmind-primary --cluster=cropmind-cluster --instance-type=PRIMARY<br/>
-                  psql $ALLOYDB_URL -c "CREATE EXTENSION IF NOT EXISTS vector"<br/>
-                  pnpm run db:push
+                  gcloud auth application-default login<br/>
+                  gcloud config set project $PROJECT_ID<br/>
+                  gcloud services enable aiplatform.googleapis.com
                 </code>
               </div>
 
@@ -258,14 +257,13 @@ export default function ArchitecturePage() {
                 <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
                   <Cloud className="w-4 h-4" /> Step 2: Deploy to Cloud Run
                 </h4>
-                <p className="text-xs mb-2">Build the container and deploy the API server and React frontend:</p>
+                <p className="text-xs mb-2">Build the container and deploy — no database or VPC required:</p>
                 <code className="block bg-background border rounded p-2 text-[11px] font-mono">
-                  gcloud builds submit --tag gcr.io/$PROJECT_ID/cropmind-api<br/>
+                  gcloud builds submit --config cloudbuild.yaml<br/>
+                  # Or manually:<br/>
                   gcloud run deploy cropmind-api --image gcr.io/$PROJECT_ID/cropmind-api \<br/>
-                  &nbsp;&nbsp;--region asia-southeast1 --allow-unauthenticated \<br/>
-                  &nbsp;&nbsp;--set-env-vars DATABASE_URL=$ALLOYDB_URL \<br/>
-                  &nbsp;&nbsp;--set-env-vars GOOGLE_CLOUD_PROJECT=$PROJECT_ID \<br/>
-                  &nbsp;&nbsp;--add-cloudsql-instances $ALLOYDB_CONNECTION_NAME
+                  &nbsp;&nbsp;--region us-central1 --allow-unauthenticated \<br/>
+                  &nbsp;&nbsp;--set-env-vars GOOGLE_CLOUD_PROJECT=$PROJECT_ID
                 </code>
               </div>
 
@@ -287,7 +285,7 @@ export default function ArchitecturePage() {
           <div className="border-t pt-6 mt-6">
             <h3 className="font-bold text-foreground text-lg mb-3">Tech Stack</h3>
             <div className="flex flex-wrap gap-2">
-              {["TypeScript", "Google ADK 0.5", "@modelcontextprotocol/sdk", "Node.js", "Express", "React", "Vite", "TailwindCSS", "Framer Motion", "Gemini 2.5 Flash", "Gemini 2.5 Pro", "gemini-embedding-001", "Cloud SQL PostgreSQL", "pgvector", "Drizzle ORM", "React Query", "SSE Streaming", "Cloud Run", "Multimodal (Image+Text)"].map(tech => (
+              {["TypeScript", "Google ADK 0.5", "@modelcontextprotocol/sdk", "Node.js", "Express 5", "React 19", "Vite 7", "TailwindCSS", "Framer Motion", "Gemini 2.5 Flash", "Gemini 2.5 Pro", "gemini-embedding-001", "Google Search Grounding", "pgvector (optional)", "Drizzle ORM", "React Query", "SSE Streaming", "Cloud Run", "Cloud Build", "Multimodal (Image+Text)"].map(tech => (
                 <span key={tech} className="text-xs bg-muted px-2.5 py-1 rounded-full font-medium">{tech}</span>
               ))}
             </div>

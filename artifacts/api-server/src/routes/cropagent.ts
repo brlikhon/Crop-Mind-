@@ -24,8 +24,15 @@ const diagnoseLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+function getPreferredLanguage(body: Record<string, unknown> | undefined): string {
+  const language = body?.preferredLanguage;
+  if (typeof language !== "string" || language.trim().length === 0) return "English";
+  return language.trim().slice(0, 80);
+}
+
 router.post("/cropagent/diagnose", diagnoseLimiter, upload.single("image"), async (req, res) => {
   const query = req.body?.query;
+  const preferredLanguage = getPreferredLanguage(req.body);
 
   if (!query || typeof query !== "string" || query.trim().length === 0) {
     res.status(400).json({
@@ -50,7 +57,7 @@ router.post("/cropagent/diagnose", diagnoseLimiter, upload.single("image"), asyn
   }
 
   try {
-    const result = await runOrchestrator(query.trim(), undefined, imageData);
+    const result = await runOrchestrator(query.trim(), undefined, imageData, preferredLanguage);
     res.json(result);
   } catch (error) {
     console.error("Orchestrator error:", error);
@@ -62,6 +69,7 @@ router.post("/cropagent/diagnose", diagnoseLimiter, upload.single("image"), asyn
 
 router.post("/cropagent/diagnose/stream", diagnoseLimiter, upload.single("image"), async (req, res) => {
   const query = req.body?.query;
+  const preferredLanguage = getPreferredLanguage(req.body);
 
   if (!query || typeof query !== "string" || query.trim().length === 0) {
     res.status(400).json({
@@ -97,7 +105,7 @@ router.post("/cropagent/diagnose/stream", diagnoseLimiter, upload.single("image"
   };
 
   try {
-    await runOrchestrator(query.trim(), sendEvent, imageData);
+    await runOrchestrator(query.trim(), sendEvent, imageData, preferredLanguage);
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (error) {

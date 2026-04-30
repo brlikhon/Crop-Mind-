@@ -1,5 +1,5 @@
 # Google Cloud Build configuration for CropMind
-# Builds and deploys API server to Cloud Run with AlloyDB
+# Builds and deploys API server + frontend to Cloud Run
 
 steps:
   # Step 1: Build the Docker image
@@ -7,7 +7,7 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/cropmind-api:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/cropmind-api:$BUILD_ID'
       - '-t'
       - 'gcr.io/$PROJECT_ID/cropmind-api:latest'
       - '-f'
@@ -19,7 +19,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/cropmind-api:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/cropmind-api:$BUILD_ID'
     id: 'push-image'
     waitFor: ['build-image']
 
@@ -31,7 +31,7 @@ steps:
     id: 'push-latest'
     waitFor: ['build-image']
 
-  # Step 4: Deploy to Cloud Run with Direct VPC Egress to reach AlloyDB
+  # Step 4: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -39,7 +39,7 @@ steps:
       - 'deploy'
       - 'cropmind-api'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/cropmind-api:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/cropmind-api:$BUILD_ID'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -55,22 +55,16 @@ steps:
       - '0'
       - '--timeout'
       - '300'
-      - '--network'
-      - 'default'
-      - '--subnet'
-      - 'default'
-      - '--vpc-egress'
-      - 'private-ranges-only'
+      - '--add-cloudsql-instances'
+      - 'YOUR_PROJECT_ID:us-central1:cropmind-db'
       - '--set-env-vars'
-      - 'NODE_ENV=production,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=true,EMBEDDING_STRICT_AI=false'
-      - '--set-secrets'
-      - 'DATABASE_URL=cropmind-database-url:latest'
+      - 'NODE_ENV=production,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=true,DATABASE_URL=postgresql://REDACTED_USER:REDACTED_PASSWORD@localhost/cropmind?host=/cloudsql/YOUR_PROJECT_ID:us-central1:cropmind-db'
     id: 'deploy-cloud-run'
     waitFor: ['push-image']
 
 # Store built images in Container Registry
 images:
-  - 'gcr.io/$PROJECT_ID/cropmind-api:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/cropmind-api:$BUILD_ID'
   - 'gcr.io/$PROJECT_ID/cropmind-api:latest'
 
 # Build options

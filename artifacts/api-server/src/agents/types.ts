@@ -1,5 +1,6 @@
 export interface FarmerQuery {
   rawQuery: string;
+  preferredLanguage: string;
   cropType: string;
   region: string;
   country: string;
@@ -41,6 +42,7 @@ export interface DiagnosisResult {
     probability: number;
     reasoning: string;
   }>;
+  sources?: string[];
 }
 
 export interface WeatherAssessment {
@@ -60,9 +62,11 @@ export interface MarketIntelligence {
 export interface TreatmentProtocol {
   immediateActions: string[];
   preventiveMeasures: string[];
+  safetyWarnings: string[];
   timelineWeeks: number;
   estimatedCost: string;
   localResources: string[];
+  sources?: string[];
 }
 
 export interface OrchestratorDecision {

@@ -16,10 +16,13 @@ export interface DiagnoseRequest {
    * @maxLength 5000
    */
   query: string;
+  /** Preferred language for farmer-facing recommendations */
+  preferredLanguage?: string;
 }
 
 export interface FarmerQuery {
   rawQuery: string;
+  preferredLanguage: string;
   cropType: string;
   region: string;
   country: string;
@@ -37,6 +40,7 @@ export interface DiagnosisResult {
   primaryDiagnosis: string;
   confidence: number;
   differentialDiagnoses: DiagnosisResultDifferentialDiagnosesItem[];
+  sources?: string[];
 }
 
 export interface WeatherAssessment {
@@ -56,9 +60,11 @@ export interface MarketIntelligence {
 export interface TreatmentProtocol {
   immediateActions: string[];
   preventiveMeasures: string[];
+  safetyWarnings: string[];
   timelineWeeks: number;
   estimatedCost: string;
   localResources: string[];
+  sources?: string[];
 }
 
 export type AgentFindingStatus =
@@ -121,6 +127,17 @@ export interface ConflictResolution {
   chosenAgent: string;
 }
 
+export type McpToolCallEntryParams = { [key: string]: unknown };
+
+export interface McpToolCallEntry {
+  toolName: string;
+  params: McpToolCallEntryParams;
+  calledBy: string;
+  success: boolean;
+  data?: unknown;
+  error?: string | null;
+}
+
 export interface DiagnoseResponse {
   sessionId: string;
   query: FarmerQuery;
@@ -133,6 +150,7 @@ export interface DiagnoseResponse {
   traces: AgentTrace[];
   orchestratorDecisions: OrchestratorDecision[];
   conflictResolutions: ConflictResolution[];
+  mcpToolCalls: McpToolCallEntry[];
   totalDurationMs: number;
 }
 
@@ -242,6 +260,284 @@ export interface CaseSubmitResponse {
   caseId: string;
   success: boolean;
   message: string;
+}
+
+export type RiskLevel = (typeof RiskLevel)[keyof typeof RiskLevel];
+
+export const RiskLevel = {
+  low: "low",
+  medium: "medium",
+  high: "high",
+  critical: "critical",
+} as const;
+
+export interface CountryRiskSummary {
+  country: string;
+  alertCount: number;
+  criticalAlerts: number;
+  affectedAreaHa: number;
+  highestRiskScore: number;
+  activeSubsidyPrograms: number;
+}
+
+export interface LeadThreat {
+  alertId: string;
+  cropType: string;
+  threatName: string;
+  threatType: string;
+  severity: RiskLevel;
+  source: string | null;
+}
+
+export type MarketSignalPressure =
+  (typeof MarketSignalPressure)[keyof typeof MarketSignalPressure];
+
+export const MarketSignalPressure = {
+  unknown: "unknown",
+  falling: "falling",
+  rising: "rising",
+  stable: "stable",
+} as const;
+
+export interface MarketSignal {
+  cropType: string;
+  marketsTracked: number;
+  avgUsdPerKg: number | null;
+  avgChange7d: number | null;
+  avgChange30d: number | null;
+  pressure: MarketSignalPressure;
+}
+
+export interface SubsidyProgramSummary {
+  programId: string;
+  programName: string;
+  benefitType: string;
+  maxBenefitUsd: number | null;
+  applicationDeadline: string | null;
+}
+
+export interface RegionRiskSummarySeverityCounts {
+  low: number;
+  medium: number;
+  high: number;
+  critical: number;
+}
+
+export interface RegionRiskSummary {
+  id: string;
+  region: string;
+  country: string;
+  riskScore: number;
+  riskLevel: RiskLevel;
+  alertCount: number;
+  affectedAreaHa: number;
+  severityCounts: RegionRiskSummarySeverityCounts;
+  crops: string[];
+  topThreats: string[];
+  priorityAction: string;
+  leadThreat: LeadThreat | null;
+  marketSignals: MarketSignal[];
+  subsidyPrograms: SubsidyProgramSummary[];
+}
+
+export interface InterventionQueueItem {
+  rank: number;
+  region: string;
+  country: string;
+  riskLevel: RiskLevel;
+  riskScore: number;
+  affectedAreaHa: number;
+  leadThreat: LeadThreat | null;
+  action: string;
+}
+
+export interface IntelligenceOverviewSummary {
+  activeAlerts: number;
+  countriesCovered: number;
+  regionsAtRisk: number;
+  criticalRegions: number;
+  totalAffectedAreaHa: number;
+  activeSubsidyPrograms: number;
+  marketsTracked: number;
+}
+
+export interface IntelligenceOverview {
+  /** @format date-time */
+  generatedAt: string;
+  summary: IntelligenceOverviewSummary;
+  countries: CountryRiskSummary[];
+  regions: RegionRiskSummary[];
+  interventionQueue: InterventionQueueItem[];
+}
+
+export type ImpactStatus = (typeof ImpactStatus)[keyof typeof ImpactStatus];
+
+export const ImpactStatus = {
+  ready: "ready",
+  next: "next",
+} as const;
+
+export type MarketTrend = (typeof MarketTrend)[keyof typeof MarketTrend];
+
+export const MarketTrend = {
+  unknown: "unknown",
+  falling: "falling",
+  rising: "rising",
+  stable: "stable",
+} as const;
+
+export interface ImpactOverviewSummary {
+  activeAlerts: number;
+  affectedAreaHa: number;
+  estimatedFarmersInAffectedZones: number;
+  modeledValueAtRiskUsd: number;
+  modeledPreventableLossUsd: number;
+  conservativeFirstSeasonSavingsUsd: number;
+  annualPilotCostUsd: number;
+  benefitCostRatio: number;
+  activeCountries: number;
+  cropTypes: number;
+  supportPrograms: number;
+}
+
+export interface CountryImpact {
+  country: string;
+  alertCount: number;
+  criticalAlerts: number;
+  affectedAreaHa: number;
+  estimatedFarmers: number;
+  cropTypes: string[];
+  valueAtRiskUsd: number;
+  preventableLossUsd: number;
+}
+
+export interface CropImpact {
+  cropType: string;
+  alertCount: number;
+  criticalAlerts: number;
+  affectedAreaHa: number;
+  avgPriceUsdPerKg: number;
+  marketTrend30d: MarketTrend;
+  valueAtRiskUsd: number;
+  preventableLossUsd: number;
+}
+
+export interface BusinessCase {
+  segment: string;
+  buyer: string;
+  revenueModel: string;
+  annualContractUsd: number;
+  modeledAnnualValueUsd: number;
+  proofMetric: string;
+  adoptionMotion: string;
+}
+
+export interface JudgeScorecardItem {
+  criterion: string;
+  score: number;
+  evidence: string;
+  nextProof: string;
+}
+
+export interface ProofMilestone {
+  phase: string;
+  metric: string;
+  target: string;
+  owner: string;
+  status: ImpactStatus;
+}
+
+export interface TrustReadinessItem {
+  control: string;
+  evidence: string;
+  owner: string;
+  status: ImpactStatus;
+}
+
+export interface ImpactMethodology {
+  assumptions: string[];
+  caveats: string[];
+}
+
+export interface ImpactOverview {
+  /** @format date-time */
+  generatedAt: string;
+  summary: ImpactOverviewSummary;
+  countryImpacts: CountryImpact[];
+  cropImpacts: CropImpact[];
+  businessCases: BusinessCase[];
+  judgeScorecard: JudgeScorecardItem[];
+  proofMilestones: ProofMilestone[];
+  trustReadiness: TrustReadinessItem[];
+  methodology: ImpactMethodology;
+}
+
+export type DemoStatus = (typeof DemoStatus)[keyof typeof DemoStatus];
+
+export const DemoStatus = {
+  ready: "ready",
+  watch: "watch",
+  next: "next",
+} as const;
+
+export interface DemoDataFootprint {
+  activeAlerts: number;
+  criticalAlerts: number;
+  countriesCovered: number;
+  cropTypes: number;
+  marketRows: number;
+  activeSubsidyPrograms: number;
+}
+
+export interface DemoFlowStep {
+  step: number;
+  title: string;
+  route: string;
+  durationSeconds: number;
+  narration: string;
+  judgeSignal: string;
+}
+
+export interface DemoSampleCase {
+  id: string;
+  title: string;
+  persona: string;
+  preferredLanguage: string;
+  query: string;
+  expectedEvidence: string[];
+}
+
+export interface DemoProofPillar {
+  pillar: string;
+  route: string;
+  evidence: string;
+}
+
+export interface DemoTechnicalHighlight {
+  track: string;
+  evidence: string;
+}
+
+export interface DemoLaunchReadiness {
+  area: string;
+  status: DemoStatus;
+  evidence: string;
+}
+
+export interface DemoBrief {
+  /** @format date-time */
+  generatedAt: string;
+  headline: string;
+  demoRuntimeMinutes: number;
+  dataFootprint: DemoDataFootprint;
+  openingHook: string;
+  demoFlow: DemoFlowStep[];
+  sampleCases: DemoSampleCase[];
+  proofPillars: DemoProofPillar[];
+  technicalHighlights: DemoTechnicalHighlight[];
+  launchReadiness: DemoLaunchReadiness[];
+  closingScript: string;
+  submissionChecklist: string[];
 }
 
 export interface ErrorResponse {

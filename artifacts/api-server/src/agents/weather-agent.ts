@@ -23,7 +23,7 @@ After calling tools and analyzing the data, respond with ONLY valid JSON matchin
   "reasoning": "string - your meteorological reasoning"
 }
 
-Always call the get_weather tool first, then get_crop_alerts. Base your analysis on actual data returned by tools.`;
+Always call the get_weather tool first, then get_crop_alerts. Base your analysis on actual data returned by tools. Keep JSON keys in English, but write farmer-facing values in the preferred response language when provided.`;
 
 const mcpCallLog: McpToolCallEntry[] = [];
 
@@ -98,11 +98,12 @@ export async function runWeatherAgent(session: OrchestratorSession): Promise<Age
   const { query } = session;
   const diseaseFindings = session.findings.find((f) => f.agentName === "CropDiseaseAgent");
 
-  const userMessage = `Assess weather impact on this agricultural situation:
+const userMessage = `Assess weather impact on this agricultural situation:
 - Crop: ${query.cropType}
 - Region: ${query.region}, ${query.country}
 - Symptoms observed: ${query.symptoms.join(", ")}
 ${diseaseFindings ? `- Preliminary diagnosis: ${diseaseFindings.summary}` : ""}
+- Preferred response language: ${query.preferredLanguage}
 - Original description: "${query.rawQuery}"
 
 Use the get_weather and get_crop_alerts tools to fetch real data, then provide your assessment.`;

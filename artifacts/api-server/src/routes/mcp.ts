@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+// @ts-ignore
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { listTools, callTool } from "../mcp/registry.js";
 import { createMcpServer } from "../mcp/mcp-server.js";

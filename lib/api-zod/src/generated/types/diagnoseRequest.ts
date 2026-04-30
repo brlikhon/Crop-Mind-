@@ -13,4 +13,6 @@ export interface DiagnoseRequest {
    * @maxLength 5000
    */
   query: string;
+  /** Preferred language for farmer-facing recommendations */
+  preferredLanguage?: string;
 }

@@ -1,6 +1,26 @@
-import { db, subsidiesTable } from "@workspace/db";
-import { eq, and, ilike, type SQL } from "drizzle-orm";
 import type { McpTool, McpToolResult, McpToolSchema } from "./types.js";
+import subsidiesData from "../data/subsidies.json" with { type: "json" };
+
+interface Subsidy {
+  programId: string;
+  programName: string;
+  country: string;
+  administeredBy: string;
+  description: string;
+  eligibleCrops: string;
+  eligibilityCriteria: string;
+  benefitType: string;
+  maxBenefitUsd: number | null;
+  applicationDeadline: string | null;
+  applicationUrl: string | null;
+  isActive: boolean;
+  targetRegion: string | null;
+  minFarmSizeHa: number | null;
+  maxFarmSizeHa: number | null;
+  lastUpdated: string;
+}
+
+const subsidies: Subsidy[] = subsidiesData as Subsidy[];
 
 const schema: McpToolSchema = {
   name: "SubsidyTool",
@@ -26,26 +46,21 @@ async function call(params: Record<string, unknown>): Promise<McpToolResult> {
   }
 
   try {
-    const conditions: SQL[] = [
-      eq(subsidiesTable.isActive, true),
-      ilike(subsidiesTable.country, `%${params.country.trim()}%`),
-    ];
-
-    let subsidies = await db
-      .select()
-      .from(subsidiesTable)
-      .where(and(...conditions));
+    const countryFilter = params.country.trim().toLowerCase();
+    let filtered = subsidies.filter(
+      (s) => s.isActive && s.country.toLowerCase().includes(countryFilter)
+    );
 
     if (typeof params.cropType === "string" && params.cropType.trim()) {
       const crop = params.cropType.trim().toLowerCase();
-      subsidies = subsidies.filter(
-        (s) => s.eligibleCrops === "all" || s.eligibleCrops.toLowerCase().includes(crop)
+      filtered = filtered.filter(
+        (s) => s.eligibleCrops.toLowerCase() === "all crops" || s.eligibleCrops.toLowerCase().includes(crop)
       );
     }
 
     if (typeof params.farmSizeHa === "number") {
       const size = params.farmSizeHa;
-      subsidies = subsidies.filter((s) => {
+      filtered = filtered.filter((s) => {
         if (s.minFarmSizeHa !== null && size < s.minFarmSizeHa) return false;
         if (s.maxFarmSizeHa !== null && size > s.maxFarmSizeHa) return false;
         return true;
@@ -56,9 +71,9 @@ async function call(params: Record<string, unknown>): Promise<McpToolResult> {
       toolName: "SubsidyTool",
       success: true,
       data: {
-        totalPrograms: subsidies.length,
+        totalPrograms: filtered.length,
         country: params.country,
-        programs: subsidies.map((s) => ({
+        programs: filtered.map((s) => ({
           programId: s.programId,
           programName: s.programName,
           administeredBy: s.administeredBy,

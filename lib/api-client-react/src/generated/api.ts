@@ -21,10 +21,13 @@ import type {
   CaseSearchResponse,
   CaseSubmitRequest,
   CaseSubmitResponse,
+  DemoBrief,
   DiagnoseRequest,
   DiagnoseResponse,
   ErrorResponse,
   HealthStatus,
+  ImpactOverview,
+  IntelligenceOverview,
   McpCallRequest,
   McpToolListResponse,
   McpToolResult,
@@ -538,3 +541,224 @@ export const useSubmitCase = <
 > => {
   return useMutation(getSubmitCaseMutationOptions(options));
 };
+
+/**
+ * Returns an APAC-wide command-center summary that combines active crop alerts, regional risk scoring, market pressure, subsidy support, and a ranked intervention queue for extension officers.
+ * @summary Regional crop risk intelligence overview
+ */
+export const getGetIntelligenceOverviewUrl = () => {
+  return `/api/intelligence/overview`;
+};
+
+export const getIntelligenceOverview = async (
+  options?: RequestInit,
+): Promise<IntelligenceOverview> => {
+  return customFetch<IntelligenceOverview>(getGetIntelligenceOverviewUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetIntelligenceOverviewQueryKey = () => {
+  return [`/api/intelligence/overview`] as const;
+};
+
+export const getGetIntelligenceOverviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof getIntelligenceOverview>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getIntelligenceOverview>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetIntelligenceOverviewQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getIntelligenceOverview>>
+  > = ({ signal }) => getIntelligenceOverview({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getIntelligenceOverview>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetIntelligenceOverviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getIntelligenceOverview>>
+>;
+export type GetIntelligenceOverviewQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Regional crop risk intelligence overview
+ */
+
+export function useGetIntelligenceOverview<
+  TData = Awaited<ReturnType<typeof getIntelligenceOverview>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getIntelligenceOverview>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetIntelligenceOverviewQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns modeled farmer reach, crop value at risk, preventable loss, pilot ROI, buyer segments, judge evidence, and trust-readiness controls.
+ * @summary Impact and business evidence overview
+ */
+export const getGetImpactOverviewUrl = () => {
+  return `/api/impact/overview`;
+};
+
+export const getImpactOverview = async (
+  options?: RequestInit,
+): Promise<ImpactOverview> => {
+  return customFetch<ImpactOverview>(getGetImpactOverviewUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetImpactOverviewQueryKey = () => {
+  return [`/api/impact/overview`] as const;
+};
+
+export const getGetImpactOverviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof getImpactOverview>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getImpactOverview>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetImpactOverviewQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getImpactOverview>>> = ({
+    signal,
+  }) => getImpactOverview({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getImpactOverview>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetImpactOverviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getImpactOverview>>
+>;
+export type GetImpactOverviewQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Impact and business evidence overview
+ */
+
+export function useGetImpactOverview<
+  TData = Awaited<ReturnType<typeof getImpactOverview>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getImpactOverview>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetImpactOverviewQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns a 5-minute judge demo run of show, sample prompts, proof pillars, launch readiness, and closing script for the competition presentation.
+ * @summary Judge demo brief
+ */
+export const getGetDemoBriefUrl = () => {
+  return `/api/demo/brief`;
+};
+
+export const getDemoBrief = async (
+  options?: RequestInit,
+): Promise<DemoBrief> => {
+  return customFetch<DemoBrief>(getGetDemoBriefUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDemoBriefQueryKey = () => {
+  return [`/api/demo/brief`] as const;
+};
+
+export const getGetDemoBriefQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDemoBrief>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getDemoBrief>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDemoBriefQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDemoBrief>>> = ({
+    signal,
+  }) => getDemoBrief({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDemoBrief>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDemoBriefQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDemoBrief>>
+>;
+export type GetDemoBriefQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Judge demo brief
+ */
+
+export function useGetDemoBrief<
+  TData = Awaited<ReturnType<typeof getDemoBrief>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getDemoBrief>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDemoBriefQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}

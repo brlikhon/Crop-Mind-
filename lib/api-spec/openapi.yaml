@@ -16,6 +16,12 @@ tags:
     description: MCP tool server operations
   - name: cases
     description: Vector case intelligence operations
+  - name: intelligence
+    description: Regional crop risk intelligence operations
+  - name: impact
+    description: Impact modeling and business evidence operations
+  - name: demo
+    description: Judge demo and submission brief operations
 paths:
   /healthz:
     get:
@@ -179,6 +185,63 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /intelligence/overview:
+    get:
+      operationId: getIntelligenceOverview
+      tags: [intelligence]
+      summary: Regional crop risk intelligence overview
+      description: Returns an APAC-wide command-center summary that combines active crop alerts, regional risk scoring, market pressure, subsidy support, and a ranked intervention queue for extension officers.
+      responses:
+        "200":
+          description: Regional intelligence overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntelligenceOverview"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /impact/overview:
+    get:
+      operationId: getImpactOverview
+      tags: [impact]
+      summary: Impact and business evidence overview
+      description: Returns modeled farmer reach, crop value at risk, preventable loss, pilot ROI, buyer segments, judge evidence, and trust-readiness controls.
+      responses:
+        "200":
+          description: Impact and business evidence overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpactOverview"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /demo/brief:
+    get:
+      operationId: getDemoBrief
+      tags: [demo]
+      summary: Judge demo brief
+      description: Returns a 5-minute judge demo run of show, sample prompts, proof pillars, launch readiness, and closing script for the competition presentation.
+      responses:
+        "200":
+          description: Judge demo brief
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DemoBrief"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -196,6 +259,10 @@ components:
           description: Natural language description of the crop situation
           minLength: 1
           maxLength: 5000
+        preferredLanguage:
+          type: string
+          description: Preferred language for farmer-facing recommendations
+          default: English
       required:
         - query
     DiagnoseResponse:
@@ -258,6 +325,8 @@ components:
       properties:
         rawQuery:
           type: string
+        preferredLanguage:
+          type: string
         cropType:
           type: string
         region:
@@ -272,6 +341,7 @@ components:
           type: string
       required:
         - rawQuery
+        - preferredLanguage
         - cropType
         - region
         - country
@@ -299,6 +369,10 @@ components:
               - name
               - probability
               - reasoning
+        sources:
+          type: array
+          items:
+            type: string
       required:
         - primaryDiagnosis
         - confidence
@@ -350,6 +424,10 @@ components:
           type: array
           items:
             type: string
+        safetyWarnings:
+          type: array
+          items:
+            type: string
         timelineWeeks:
           type: number
         estimatedCost:
@@ -358,9 +436,14 @@ components:
           type: array
           items:
             type: string
+        sources:
+          type: array
+          items:
+            type: string
       required:
         - immediateActions
         - preventiveMeasures
+        - safetyWarnings
         - timelineWeeks
         - estimatedCost
         - localResources
@@ -675,6 +758,668 @@ components:
         - caseId
         - success
         - message
+    RiskLevel:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+        - critical
+    IntelligenceOverview:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        summary:
+          type: object
+          properties:
+            activeAlerts:
+              type: number
+            countriesCovered:
+              type: number
+            regionsAtRisk:
+              type: number
+            criticalRegions:
+              type: number
+            totalAffectedAreaHa:
+              type: number
+            activeSubsidyPrograms:
+              type: number
+            marketsTracked:
+              type: number
+          required:
+            - activeAlerts
+            - countriesCovered
+            - regionsAtRisk
+            - criticalRegions
+            - totalAffectedAreaHa
+            - activeSubsidyPrograms
+            - marketsTracked
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountryRiskSummary"
+        regions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RegionRiskSummary"
+        interventionQueue:
+          type: array
+          items:
+            $ref: "#/components/schemas/InterventionQueueItem"
+      required:
+        - generatedAt
+        - summary
+        - countries
+        - regions
+        - interventionQueue
+    CountryRiskSummary:
+      type: object
+      properties:
+        country:
+          type: string
+        alertCount:
+          type: number
+        criticalAlerts:
+          type: number
+        affectedAreaHa:
+          type: number
+        highestRiskScore:
+          type: number
+        activeSubsidyPrograms:
+          type: number
+      required:
+        - country
+        - alertCount
+        - criticalAlerts
+        - affectedAreaHa
+        - highestRiskScore
+        - activeSubsidyPrograms
+    RegionRiskSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        region:
+          type: string
+        country:
+          type: string
+        riskScore:
+          type: number
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        alertCount:
+          type: number
+        affectedAreaHa:
+          type: number
+        severityCounts:
+          type: object
+          properties:
+            low:
+              type: number
+            medium:
+              type: number
+            high:
+              type: number
+            critical:
+              type: number
+          required:
+            - low
+            - medium
+            - high
+            - critical
+        crops:
+          type: array
+          items:
+            type: string
+        topThreats:
+          type: array
+          items:
+            type: string
+        priorityAction:
+          type: string
+        leadThreat:
+          oneOf:
+            - $ref: "#/components/schemas/LeadThreat"
+            - type: "null"
+        marketSignals:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketSignal"
+        subsidyPrograms:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubsidyProgramSummary"
+      required:
+        - id
+        - region
+        - country
+        - riskScore
+        - riskLevel
+        - alertCount
+        - affectedAreaHa
+        - severityCounts
+        - crops
+        - topThreats
+        - priorityAction
+        - leadThreat
+        - marketSignals
+        - subsidyPrograms
+    LeadThreat:
+      type: object
+      properties:
+        alertId:
+          type: string
+        cropType:
+          type: string
+        threatName:
+          type: string
+        threatType:
+          type: string
+        severity:
+          $ref: "#/components/schemas/RiskLevel"
+        source:
+          oneOf:
+            - type: string
+            - type: "null"
+      required:
+        - alertId
+        - cropType
+        - threatName
+        - threatType
+        - severity
+        - source
+    MarketSignal:
+      type: object
+      properties:
+        cropType:
+          type: string
+        marketsTracked:
+          type: number
+        avgUsdPerKg:
+          oneOf:
+            - type: number
+            - type: "null"
+        avgChange7d:
+          oneOf:
+            - type: number
+            - type: "null"
+        avgChange30d:
+          oneOf:
+            - type: number
+            - type: "null"
+        pressure:
+          type: string
+          enum:
+            - unknown
+            - falling
+            - rising
+            - stable
+      required:
+        - cropType
+        - marketsTracked
+        - avgUsdPerKg
+        - avgChange7d
+        - avgChange30d
+        - pressure
+    SubsidyProgramSummary:
+      type: object
+      properties:
+        programId:
+          type: string
+        programName:
+          type: string
+        benefitType:
+          type: string
+        maxBenefitUsd:
+          oneOf:
+            - type: number
+            - type: "null"
+        applicationDeadline:
+          oneOf:
+            - type: string
+            - type: "null"
+      required:
+        - programId
+        - programName
+        - benefitType
+        - maxBenefitUsd
+        - applicationDeadline
+    InterventionQueueItem:
+      type: object
+      properties:
+        rank:
+          type: number
+        region:
+          type: string
+        country:
+          type: string
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        riskScore:
+          type: number
+        affectedAreaHa:
+          type: number
+        leadThreat:
+          oneOf:
+            - $ref: "#/components/schemas/LeadThreat"
+            - type: "null"
+        action:
+          type: string
+      required:
+        - rank
+        - region
+        - country
+        - riskLevel
+        - riskScore
+        - affectedAreaHa
+        - leadThreat
+        - action
+    ImpactStatus:
+      type: string
+      enum:
+        - ready
+        - next
+    MarketTrend:
+      type: string
+      enum:
+        - unknown
+        - falling
+        - rising
+        - stable
+    ImpactOverview:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        summary:
+          $ref: "#/components/schemas/ImpactOverviewSummary"
+        countryImpacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountryImpact"
+        cropImpacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CropImpact"
+        businessCases:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessCase"
+        judgeScorecard:
+          type: array
+          items:
+            $ref: "#/components/schemas/JudgeScorecardItem"
+        proofMilestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProofMilestone"
+        trustReadiness:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrustReadinessItem"
+        methodology:
+          $ref: "#/components/schemas/ImpactMethodology"
+      required:
+        - generatedAt
+        - summary
+        - countryImpacts
+        - cropImpacts
+        - businessCases
+        - judgeScorecard
+        - proofMilestones
+        - trustReadiness
+        - methodology
+    ImpactOverviewSummary:
+      type: object
+      properties:
+        activeAlerts:
+          type: number
+        affectedAreaHa:
+          type: number
+        estimatedFarmersInAffectedZones:
+          type: number
+        modeledValueAtRiskUsd:
+          type: number
+        modeledPreventableLossUsd:
+          type: number
+        conservativeFirstSeasonSavingsUsd:
+          type: number
+        annualPilotCostUsd:
+          type: number
+        benefitCostRatio:
+          type: number
+        activeCountries:
+          type: number
+        cropTypes:
+          type: number
+        supportPrograms:
+          type: number
+      required:
+        - activeAlerts
+        - affectedAreaHa
+        - estimatedFarmersInAffectedZones
+        - modeledValueAtRiskUsd
+        - modeledPreventableLossUsd
+        - conservativeFirstSeasonSavingsUsd
+        - annualPilotCostUsd
+        - benefitCostRatio
+        - activeCountries
+        - cropTypes
+        - supportPrograms
+    CountryImpact:
+      type: object
+      properties:
+        country:
+          type: string
+        alertCount:
+          type: number
+        criticalAlerts:
+          type: number
+        affectedAreaHa:
+          type: number
+        estimatedFarmers:
+          type: number
+        cropTypes:
+          type: array
+          items:
+            type: string
+        valueAtRiskUsd:
+          type: number
+        preventableLossUsd:
+          type: number
+      required:
+        - country
+        - alertCount
+        - criticalAlerts
+        - affectedAreaHa
+        - estimatedFarmers
+        - cropTypes
+        - valueAtRiskUsd
+        - preventableLossUsd
+    CropImpact:
+      type: object
+      properties:
+        cropType:
+          type: string
+        alertCount:
+          type: number
+        criticalAlerts:
+          type: number
+        affectedAreaHa:
+          type: number
+        avgPriceUsdPerKg:
+          type: number
+        marketTrend30d:
+          $ref: "#/components/schemas/MarketTrend"
+        valueAtRiskUsd:
+          type: number
+        preventableLossUsd:
+          type: number
+      required:
+        - cropType
+        - alertCount
+        - criticalAlerts
+        - affectedAreaHa
+        - avgPriceUsdPerKg
+        - marketTrend30d
+        - valueAtRiskUsd
+        - preventableLossUsd
+    BusinessCase:
+      type: object
+      properties:
+        segment:
+          type: string
+        buyer:
+          type: string
+        revenueModel:
+          type: string
+        annualContractUsd:
+          type: number
+        modeledAnnualValueUsd:
+          type: number
+        proofMetric:
+          type: string
+        adoptionMotion:
+          type: string
+      required:
+        - segment
+        - buyer
+        - revenueModel
+        - annualContractUsd
+        - modeledAnnualValueUsd
+        - proofMetric
+        - adoptionMotion
+    JudgeScorecardItem:
+      type: object
+      properties:
+        criterion:
+          type: string
+        score:
+          type: number
+        evidence:
+          type: string
+        nextProof:
+          type: string
+      required:
+        - criterion
+        - score
+        - evidence
+        - nextProof
+    ProofMilestone:
+      type: object
+      properties:
+        phase:
+          type: string
+        metric:
+          type: string
+        target:
+          type: string
+        owner:
+          type: string
+        status:
+          $ref: "#/components/schemas/ImpactStatus"
+      required:
+        - phase
+        - metric
+        - target
+        - owner
+        - status
+    TrustReadinessItem:
+      type: object
+      properties:
+        control:
+          type: string
+        evidence:
+          type: string
+        owner:
+          type: string
+        status:
+          $ref: "#/components/schemas/ImpactStatus"
+      required:
+        - control
+        - evidence
+        - owner
+        - status
+    ImpactMethodology:
+      type: object
+      properties:
+        assumptions:
+          type: array
+          items:
+            type: string
+        caveats:
+          type: array
+          items:
+            type: string
+      required:
+        - assumptions
+        - caveats
+    DemoStatus:
+      type: string
+      enum:
+        - ready
+        - watch
+        - next
+    DemoBrief:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        headline:
+          type: string
+        demoRuntimeMinutes:
+          type: number
+        dataFootprint:
+          $ref: "#/components/schemas/DemoDataFootprint"
+        openingHook:
+          type: string
+        demoFlow:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemoFlowStep"
+        sampleCases:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemoSampleCase"
+        proofPillars:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemoProofPillar"
+        technicalHighlights:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemoTechnicalHighlight"
+        launchReadiness:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemoLaunchReadiness"
+        closingScript:
+          type: string
+        submissionChecklist:
+          type: array
+          items:
+            type: string
+      required:
+        - generatedAt
+        - headline
+        - demoRuntimeMinutes
+        - dataFootprint
+        - openingHook
+        - demoFlow
+        - sampleCases
+        - proofPillars
+        - technicalHighlights
+        - launchReadiness
+        - closingScript
+        - submissionChecklist
+    DemoDataFootprint:
+      type: object
+      properties:
+        activeAlerts:
+          type: number
+        criticalAlerts:
+          type: number
+        countriesCovered:
+          type: number
+        cropTypes:
+          type: number
+        marketRows:
+          type: number
+        activeSubsidyPrograms:
+          type: number
+      required:
+        - activeAlerts
+        - criticalAlerts
+        - countriesCovered
+        - cropTypes
+        - marketRows
+        - activeSubsidyPrograms
+    DemoFlowStep:
+      type: object
+      properties:
+        step:
+          type: number
+        title:
+          type: string
+        route:
+          type: string
+        durationSeconds:
+          type: number
+        narration:
+          type: string
+        judgeSignal:
+          type: string
+      required:
+        - step
+        - title
+        - route
+        - durationSeconds
+        - narration
+        - judgeSignal
+    DemoSampleCase:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        persona:
+          type: string
+        preferredLanguage:
+          type: string
+        query:
+          type: string
+        expectedEvidence:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - title
+        - persona
+        - preferredLanguage
+        - query
+        - expectedEvidence
+    DemoProofPillar:
+      type: object
+      properties:
+        pillar:
+          type: string
+        route:
+          type: string
+        evidence:
+          type: string
+      required:
+        - pillar
+        - route
+        - evidence
+    DemoTechnicalHighlight:
+      type: object
+      properties:
+        track:
+          type: string
+        evidence:
+          type: string
+      required:
+        - track
+        - evidence
+    DemoLaunchReadiness:
+      type: object
+      properties:
+        area:
+          type: string
+        status:
+          $ref: "#/components/schemas/DemoStatus"
+        evidence:
+          type: string
+      required:
+        - area
+        - status
+        - evidence
     ErrorResponse:
       type: object
       properties:

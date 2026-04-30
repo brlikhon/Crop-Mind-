@@ -37,7 +37,23 @@ COPY --from=builder /app/artifacts/api-server/dist ./dist
 COPY --from=builder /app/artifacts/cropmind/dist/public ./public
 
 # Install only the runtime external dependencies (not bundled by esbuild)
-RUN npm init -y && npm install --no-save @google/adk@0.5.0 @modelcontextprotocol/sdk@1.27.1
+RUN npm init -y && npm install --no-save \
+  @google/adk@0.5.0 \
+  @modelcontextprotocol/sdk@1.27.1 \
+  @google-cloud/storage@^7.17.1 \
+  @google-cloud/opentelemetry-cloud-monitoring-exporter@^0.21.0 \
+  @google-cloud/opentelemetry-cloud-trace-exporter@^3.0.0 \
+  @opentelemetry/api@1.9.0 \
+  @opentelemetry/api-logs@^0.205.0 \
+  @opentelemetry/exporter-logs-otlp-http@^0.205.0 \
+  @opentelemetry/exporter-metrics-otlp-http@^0.205.0 \
+  @opentelemetry/exporter-trace-otlp-http@^0.205.0 \
+  @opentelemetry/resource-detector-gcp@^0.40.0 \
+  @opentelemetry/resources@^2.1.0 \
+  @opentelemetry/sdk-logs@^0.205.0 \
+  @opentelemetry/sdk-metrics@^2.1.0 \
+  @opentelemetry/sdk-trace-base@^2.1.0 \
+  @opentelemetry/sdk-trace-node@^2.1.0
 
 RUN groupadd -r cropmind && useradd -r -g cropmind cropmind
 RUN chown -R cropmind:cropmind /app

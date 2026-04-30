@@ -11,4 +11,5 @@ export interface DiagnosisResult {
   primaryDiagnosis: string;
   confidence: number;
   differentialDiagnoses: DiagnosisResultDifferentialDiagnosesItem[];
+  sources?: string[];
 }

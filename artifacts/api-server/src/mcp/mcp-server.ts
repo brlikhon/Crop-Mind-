@@ -16,7 +16,8 @@ export function createMcpServer(): McpServer {
       country: z.string().describe("Country name (e.g., 'India', 'Thailand')"),
       cropType: z.string().optional().describe("Crop type for context"),
     },
-    async ({ region, country, cropType }) => {
+    async (args: any) => {
+      const { region, country, cropType } = args;
       const result = await callTool("WeatherTool", { region, country, cropType });
       return {
         content: [
@@ -41,7 +42,8 @@ export function createMcpServer(): McpServer {
       country: z.string().optional().describe("Country name to filter alerts"),
       severity: z.enum(["low", "medium", "high", "critical"]).optional().describe("Minimum severity level filter"),
     },
-    async ({ cropType, region, country, severity }) => {
+    async (args: any) => {
+      const { cropType, region, country, severity } = args;
       const result = await callTool("CropAlertTool", { cropType, region, country, severity });
       return {
         content: [
@@ -65,7 +67,8 @@ export function createMcpServer(): McpServer {
       country: z.string().optional().describe("Country to filter market prices (e.g., 'India', 'Thailand')"),
       market: z.string().optional().describe("Specific market name"),
     },
-    async ({ cropType, country, market }) => {
+    async (args: any) => {
+      const { cropType, country, market } = args;
       const result = await callTool("MarketPriceTool", { cropType, country, market });
       return {
         content: [
@@ -89,7 +92,8 @@ export function createMcpServer(): McpServer {
       cropType: z.string().optional().describe("Crop type to filter applicable subsidies"),
       farmSizeHa: z.number().optional().describe("Farm size in hectares for eligibility filtering"),
     },
-    async ({ country, cropType, farmSizeHa }) => {
+    async (args: any) => {
+      const { country, cropType, farmSizeHa } = args;
       const result = await callTool("SubsidyTool", { country, cropType, farmSizeHa });
       return {
         content: [

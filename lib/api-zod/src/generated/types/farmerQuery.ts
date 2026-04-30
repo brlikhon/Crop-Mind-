@@ -8,6 +8,7 @@
 
 export interface FarmerQuery {
   rawQuery: string;
+  preferredLanguage: string;
   cropType: string;
   region: string;
   country: string;

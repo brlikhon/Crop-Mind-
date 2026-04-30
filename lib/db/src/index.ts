@@ -4,19 +4,22 @@ import * as schema from "./schema";
 
 const { Pool } = pg;
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+let pool: pg.Pool | null = null;
+let db: ReturnType<typeof drizzle> | null = null;
+
+if (process.env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    connectionTimeoutMillis: 5000,
+    idle_in_transaction_session_timeout: 30000,
+    statement_timeout: 30000,
+    max: 10,
+  });
+  db = drizzle(pool, { schema });
+  console.log("[db] PostgreSQL pool created");
+} else {
+  console.warn("[db] DATABASE_URL not set — database features disabled. MCP tools use embedded data.");
 }
 
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 5000,   // Fail fast (5s) if AlloyDB is stopped/unreachable
-  idle_in_transaction_session_timeout: 30000,
-  statement_timeout: 30000,        // Kill queries that take longer than 30s
-  max: 10,                         // Max pool connections
-});
-export const db = drizzle(pool, { schema });
-
+export { pool, db };
 export * from "./schema";

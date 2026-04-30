@@ -34,6 +34,16 @@ export async function searchSimilarCases(params: CaseSearchParams): Promise<Case
   const start = Date.now();
   const { symptomsDescription, cropType, country, topK = 5 } = params;
 
+  if (!pool) {
+    return {
+      query: symptomsDescription,
+      filters: { cropType, country },
+      candidatesFound: 0,
+      results: [],
+      durationMs: 0,
+    };
+  }
+
   const queryEmbedding = await generateEmbeddingAsync(symptomsDescription);
   const vecStr = `[${queryEmbedding.join(",")}]`;
 
@@ -127,6 +137,14 @@ export interface CaseSubmitResult {
 }
 
 export async function submitCase(submission: CaseSubmission): Promise<CaseSubmitResult> {
+  if (!pool) {
+    return {
+      caseId: "",
+      success: false,
+      message: "Case submission requires PostgreSQL with pgvector. DATABASE_URL not configured.",
+    };
+  }
+
   const caseId = `CASE-USR-${Date.now().toString(36).toUpperCase()}`;
 
   const caseText = buildCaseText({

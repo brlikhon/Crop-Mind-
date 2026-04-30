@@ -23,7 +23,7 @@ After calling tools and analyzing the data, respond with ONLY valid JSON matchin
   "reasoning": "string - your economic analysis reasoning"
 }
 
-Always call the get_market_prices tool first, then get_subsidies. Base your analysis on actual data.`;
+Always call the get_market_prices tool first, then get_subsidies. Base your analysis on actual data. Keep JSON keys in English, but write farmer-facing values in the preferred response language when provided.`;
 
 const mcpCallLog: McpToolCallEntry[] = [];
 
@@ -98,11 +98,12 @@ export async function runMarketAgent(session: OrchestratorSession): Promise<Agen
   const { query } = session;
   const diseaseFindings = session.findings.find((f) => f.agentName === "CropDiseaseAgent");
 
-  const userMessage = `Provide economic analysis for this agricultural situation:
+const userMessage = `Provide economic analysis for this agricultural situation:
 - Crop: ${query.cropType}
 - Region: ${query.region}, ${query.country}
 - Symptoms: ${query.symptoms.join(", ")}
 ${diseaseFindings ? `- Diagnosis: ${diseaseFindings.summary}` : ""}
+- Preferred response language: ${query.preferredLanguage}
 - Original description: "${query.rawQuery}"
 
 Use the get_market_prices and get_subsidies tools to fetch real data, then advise on economic viability of treatment vs replanting.`;

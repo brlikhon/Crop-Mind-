@@ -9,13 +9,25 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@google-cloud/opentelemetry-cloud-monitoring-exporter": "0.21.0",
+    "@google-cloud/opentelemetry-cloud-trace-exporter": "3.0.0",
+    "@google-cloud/storage": "7.17.1",
     "@google/adk": "^0.5.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/api-logs": "0.205.0",
+    "@opentelemetry/exporter-logs-otlp-http": "0.205.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "0.205.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.205.0",
+    "@opentelemetry/resource-detector-gcp": "0.40.0",
+    "@opentelemetry/resources": "2.1.0",
+    "@opentelemetry/sdk-logs": "0.205.0",
+    "@opentelemetry/sdk-metrics": "2.1.0",
+    "@opentelemetry/sdk-trace-base": "2.1.0",
+    "@opentelemetry/sdk-trace-node": "2.1.0",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/integrations-google-vertex-ai-server": "workspace:*",
-
-
     "cors": "^2",
     "drizzle-orm": "catalog:",
     "express": "^5",
@@ -24,7 +36,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",

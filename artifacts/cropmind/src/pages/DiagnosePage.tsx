@@ -40,7 +40,7 @@ export default function DiagnosePage() {
     }
   }, []);
 
-  const handleDiagnose = async (query: string, image?: File) => {
+  const handleDiagnose = async (query: string, image: File | undefined, preferredLanguage: string) => {
     setHasStarted(true);
     setIsStreaming(true);
     setLiveTraces([]);
@@ -73,7 +73,7 @@ export default function DiagnosePage() {
           setIsStreaming(false);
           setHasStarted(false);
         },
-      }, image);
+      }, { imageFile: image, preferredLanguage });
     } catch (err) {
       toast({
         title: "Diagnosis Failed",

@@ -21,18 +21,25 @@ export const HealthCheckResponse = zod.object({
  */
 export const diagnoseCropBodyQueryMax = 5000;
 
+export const diagnoseCropBodyPreferredLanguageDefault = `English`;
+
 export const DiagnoseCropBody = zod.object({
   query: zod
     .string()
     .min(1)
     .max(diagnoseCropBodyQueryMax)
     .describe("Natural language description of the crop situation"),
+  preferredLanguage: zod
+    .string()
+    .default(diagnoseCropBodyPreferredLanguageDefault)
+    .describe("Preferred language for farmer-facing recommendations"),
 });
 
 export const DiagnoseCropResponse = zod.object({
   sessionId: zod.string(),
   query: zod.object({
     rawQuery: zod.string(),
+    preferredLanguage: zod.string(),
     cropType: zod.string(),
     region: zod.string(),
     country: zod.string(),
@@ -51,6 +58,7 @@ export const DiagnoseCropResponse = zod.object({
             reasoning: zod.string(),
           }),
         ),
+        sources: zod.array(zod.string()).optional(),
       }),
       zod.null(),
     ])
@@ -82,9 +90,11 @@ export const DiagnoseCropResponse = zod.object({
       zod.object({
         immediateActions: zod.array(zod.string()),
         preventiveMeasures: zod.array(zod.string()),
+        safetyWarnings: zod.array(zod.string()),
         timelineWeeks: zod.number(),
         estimatedCost: zod.string(),
         localResources: zod.array(zod.string()),
+        sources: zod.array(zod.string()).optional(),
       }),
       zod.null(),
     ])
@@ -130,6 +140,16 @@ export const DiagnoseCropResponse = zod.object({
       resolution: zod.string(),
       rationale: zod.string(),
       chosenAgent: zod.string(),
+    }),
+  ),
+  mcpToolCalls: zod.array(
+    zod.object({
+      toolName: zod.string(),
+      params: zod.record(zod.string(), zod.unknown()),
+      calledBy: zod.string(),
+      success: zod.boolean(),
+      data: zod.unknown().optional(),
+      error: zod.union([zod.string(), zod.null()]).optional(),
     }),
   ),
   totalDurationMs: zod.number(),
@@ -241,4 +261,249 @@ export const SubmitCaseBody = zod.object({
     .number()
     .min(submitCaseBodyOutcomeScoreMin)
     .max(submitCaseBodyOutcomeScoreMax),
+});
+
+/**
+ * Returns an APAC-wide command-center summary that combines active crop alerts, regional risk scoring, market pressure, subsidy support, and a ranked intervention queue for extension officers.
+ * @summary Regional crop risk intelligence overview
+ */
+export const GetIntelligenceOverviewResponse = zod.object({
+  generatedAt: zod.string().datetime(),
+  summary: zod.object({
+    activeAlerts: zod.number(),
+    countriesCovered: zod.number(),
+    regionsAtRisk: zod.number(),
+    criticalRegions: zod.number(),
+    totalAffectedAreaHa: zod.number(),
+    activeSubsidyPrograms: zod.number(),
+    marketsTracked: zod.number(),
+  }),
+  countries: zod.array(
+    zod.object({
+      country: zod.string(),
+      alertCount: zod.number(),
+      criticalAlerts: zod.number(),
+      affectedAreaHa: zod.number(),
+      highestRiskScore: zod.number(),
+      activeSubsidyPrograms: zod.number(),
+    }),
+  ),
+  regions: zod.array(
+    zod.object({
+      id: zod.string(),
+      region: zod.string(),
+      country: zod.string(),
+      riskScore: zod.number(),
+      riskLevel: zod.enum(["low", "medium", "high", "critical"]),
+      alertCount: zod.number(),
+      affectedAreaHa: zod.number(),
+      severityCounts: zod.object({
+        low: zod.number(),
+        medium: zod.number(),
+        high: zod.number(),
+        critical: zod.number(),
+      }),
+      crops: zod.array(zod.string()),
+      topThreats: zod.array(zod.string()),
+      priorityAction: zod.string(),
+      leadThreat: zod.union([
+        zod.object({
+          alertId: zod.string(),
+          cropType: zod.string(),
+          threatName: zod.string(),
+          threatType: zod.string(),
+          severity: zod.enum(["low", "medium", "high", "critical"]),
+          source: zod.union([zod.string(), zod.null()]),
+        }),
+        zod.null(),
+      ]),
+      marketSignals: zod.array(
+        zod.object({
+          cropType: zod.string(),
+          marketsTracked: zod.number(),
+          avgUsdPerKg: zod.union([zod.number(), zod.null()]),
+          avgChange7d: zod.union([zod.number(), zod.null()]),
+          avgChange30d: zod.union([zod.number(), zod.null()]),
+          pressure: zod.enum(["unknown", "falling", "rising", "stable"]),
+        }),
+      ),
+      subsidyPrograms: zod.array(
+        zod.object({
+          programId: zod.string(),
+          programName: zod.string(),
+          benefitType: zod.string(),
+          maxBenefitUsd: zod.union([zod.number(), zod.null()]),
+          applicationDeadline: zod.union([zod.string(), zod.null()]),
+        }),
+      ),
+    }),
+  ),
+  interventionQueue: zod.array(
+    zod.object({
+      rank: zod.number(),
+      region: zod.string(),
+      country: zod.string(),
+      riskLevel: zod.enum(["low", "medium", "high", "critical"]),
+      riskScore: zod.number(),
+      affectedAreaHa: zod.number(),
+      leadThreat: zod.union([
+        zod.object({
+          alertId: zod.string(),
+          cropType: zod.string(),
+          threatName: zod.string(),
+          threatType: zod.string(),
+          severity: zod.enum(["low", "medium", "high", "critical"]),
+          source: zod.union([zod.string(), zod.null()]),
+        }),
+        zod.null(),
+      ]),
+      action: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * Returns modeled farmer reach, crop value at risk, preventable loss, pilot ROI, buyer segments, judge evidence, and trust-readiness controls.
+ * @summary Impact and business evidence overview
+ */
+export const GetImpactOverviewResponse = zod.object({
+  generatedAt: zod.string().datetime(),
+  summary: zod.object({
+    activeAlerts: zod.number(),
+    affectedAreaHa: zod.number(),
+    estimatedFarmersInAffectedZones: zod.number(),
+    modeledValueAtRiskUsd: zod.number(),
+    modeledPreventableLossUsd: zod.number(),
+    conservativeFirstSeasonSavingsUsd: zod.number(),
+    annualPilotCostUsd: zod.number(),
+    benefitCostRatio: zod.number(),
+    activeCountries: zod.number(),
+    cropTypes: zod.number(),
+    supportPrograms: zod.number(),
+  }),
+  countryImpacts: zod.array(
+    zod.object({
+      country: zod.string(),
+      alertCount: zod.number(),
+      criticalAlerts: zod.number(),
+      affectedAreaHa: zod.number(),
+      estimatedFarmers: zod.number(),
+      cropTypes: zod.array(zod.string()),
+      valueAtRiskUsd: zod.number(),
+      preventableLossUsd: zod.number(),
+    }),
+  ),
+  cropImpacts: zod.array(
+    zod.object({
+      cropType: zod.string(),
+      alertCount: zod.number(),
+      criticalAlerts: zod.number(),
+      affectedAreaHa: zod.number(),
+      avgPriceUsdPerKg: zod.number(),
+      marketTrend30d: zod.enum(["unknown", "falling", "rising", "stable"]),
+      valueAtRiskUsd: zod.number(),
+      preventableLossUsd: zod.number(),
+    }),
+  ),
+  businessCases: zod.array(
+    zod.object({
+      segment: zod.string(),
+      buyer: zod.string(),
+      revenueModel: zod.string(),
+      annualContractUsd: zod.number(),
+      modeledAnnualValueUsd: zod.number(),
+      proofMetric: zod.string(),
+      adoptionMotion: zod.string(),
+    }),
+  ),
+  judgeScorecard: zod.array(
+    zod.object({
+      criterion: zod.string(),
+      score: zod.number(),
+      evidence: zod.string(),
+      nextProof: zod.string(),
+    }),
+  ),
+  proofMilestones: zod.array(
+    zod.object({
+      phase: zod.string(),
+      metric: zod.string(),
+      target: zod.string(),
+      owner: zod.string(),
+      status: zod.enum(["ready", "next"]),
+    }),
+  ),
+  trustReadiness: zod.array(
+    zod.object({
+      control: zod.string(),
+      evidence: zod.string(),
+      owner: zod.string(),
+      status: zod.enum(["ready", "next"]),
+    }),
+  ),
+  methodology: zod.object({
+    assumptions: zod.array(zod.string()),
+    caveats: zod.array(zod.string()),
+  }),
+});
+
+/**
+ * Returns a 5-minute judge demo run of show, sample prompts, proof pillars, launch readiness, and closing script for the competition presentation.
+ * @summary Judge demo brief
+ */
+export const GetDemoBriefResponse = zod.object({
+  generatedAt: zod.string().datetime(),
+  headline: zod.string(),
+  demoRuntimeMinutes: zod.number(),
+  dataFootprint: zod.object({
+    activeAlerts: zod.number(),
+    criticalAlerts: zod.number(),
+    countriesCovered: zod.number(),
+    cropTypes: zod.number(),
+    marketRows: zod.number(),
+    activeSubsidyPrograms: zod.number(),
+  }),
+  openingHook: zod.string(),
+  demoFlow: zod.array(
+    zod.object({
+      step: zod.number(),
+      title: zod.string(),
+      route: zod.string(),
+      durationSeconds: zod.number(),
+      narration: zod.string(),
+      judgeSignal: zod.string(),
+    }),
+  ),
+  sampleCases: zod.array(
+    zod.object({
+      id: zod.string(),
+      title: zod.string(),
+      persona: zod.string(),
+      preferredLanguage: zod.string(),
+      query: zod.string(),
+      expectedEvidence: zod.array(zod.string()),
+    }),
+  ),
+  proofPillars: zod.array(
+    zod.object({
+      pillar: zod.string(),
+      route: zod.string(),
+      evidence: zod.string(),
+    }),
+  ),
+  technicalHighlights: zod.array(
+    zod.object({
+      track: zod.string(),
+      evidence: zod.string(),
+    }),
+  ),
+  launchReadiness: zod.array(
+    zod.object({
+      area: zod.string(),
+      status: zod.enum(["ready", "watch", "next"]),
+      evidence: zod.string(),
+    }),
+  ),
+  closingScript: zod.string(),
+  submissionChecklist: zod.array(zod.string()),
 });

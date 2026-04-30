@@ -10,6 +10,7 @@ import type { ConflictResolution } from "./conflictResolution";
 import type { DiagnosisResult } from "./diagnosisResult";
 import type { FarmerQuery } from "./farmerQuery";
 import type { MarketIntelligence } from "./marketIntelligence";
+import type { McpToolCallEntry } from "./mcpToolCallEntry";
 import type { OrchestratorDecision } from "./orchestratorDecision";
 import type { TreatmentProtocol } from "./treatmentProtocol";
 import type { WeatherAssessment } from "./weatherAssessment";
@@ -26,5 +27,6 @@ export interface DiagnoseResponse {
   traces: AgentTrace[];
   orchestratorDecisions: OrchestratorDecision[];
   conflictResolutions: ConflictResolution[];
+  mcpToolCalls: McpToolCallEntry[];
   totalDurationMs: number;
 }

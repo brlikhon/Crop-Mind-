@@ -1,6 +1,23 @@
-import { db, marketPricesTable } from "@workspace/db";
-import { and, ilike, type SQL } from "drizzle-orm";
 import type { McpTool, McpToolResult, McpToolSchema } from "./types.js";
+import pricesData from "../data/market-prices.json" with { type: "json" };
+
+interface MarketPrice {
+  cropType: string;
+  country: string;
+  market: string;
+  pricePerKg: number;
+  currency: string;
+  priceUsdPerKg: number;
+  weekOf: string;
+  priceChange7d: number | null;
+  priceChange30d: number | null;
+  volume: string | null;
+  grade: string | null;
+  source: string | null;
+  notes: string | null;
+}
+
+const prices: MarketPrice[] = pricesData as MarketPrice[];
 
 const schema: McpToolSchema = {
   name: "MarketPriceTool",
@@ -16,28 +33,27 @@ async function call(params: Record<string, unknown>): Promise<McpToolResult> {
   const start = Date.now();
 
   try {
-    const conditions: SQL[] = [];
+    let filtered = [...prices];
 
     if (typeof params.cropType === "string" && params.cropType.trim()) {
-      conditions.push(ilike(marketPricesTable.cropType, params.cropType.trim()));
+      const ct = params.cropType.trim().toLowerCase();
+      filtered = filtered.filter((p) => p.cropType.toLowerCase() === ct);
     }
     if (typeof params.country === "string" && params.country.trim()) {
-      conditions.push(ilike(marketPricesTable.country, `%${params.country.trim()}%`));
+      const c = params.country.trim().toLowerCase();
+      filtered = filtered.filter((p) => p.country.toLowerCase().includes(c));
     }
     if (typeof params.market === "string" && params.market.trim()) {
-      conditions.push(ilike(marketPricesTable.market, `%${params.market.trim()}%`));
+      const m = params.market.trim().toLowerCase();
+      filtered = filtered.filter((p) => p.market.toLowerCase().includes(m));
     }
-
-    const prices = conditions.length > 0
-      ? await db.select().from(marketPricesTable).where(and(...conditions))
-      : await db.select().from(marketPricesTable);
 
     return {
       toolName: "MarketPriceTool",
       success: true,
       data: {
-        totalResults: prices.length,
-        prices: prices.map((p) => ({
+        totalResults: filtered.length,
+        prices: filtered.map((p) => ({
           cropType: p.cropType,
           country: p.country,
           market: p.market,

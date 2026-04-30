@@ -1,4 +1,4 @@
-# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+﻿# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # compiled output
 dist
@@ -11,7 +11,7 @@ out-tsc
 # dependencies
 node_modules
 
-# IDEs and editors (do not commit — local only)
+# IDEs and editors (do not commit â€” local only)
 /.idea
 .project
 .classpath
@@ -53,3 +53,7 @@ attached_assets/
 /INFRASTRUCTURE_ACCURACY*.md
 /plan.md
 /replit.md
+.env
+
+
+.env
