@@ -566,7 +566,7 @@ export function ResultsDashboard({
     >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <div className="bg-card rounded-2xl border shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-card rounded-2xl border shadow-sm overflow-hidden flex flex-col h-[600px]">
           <div className="p-4 border-b bg-muted/30 flex items-center gap-2">
             <Cpu className="w-5 h-5 text-primary" />
             <h3 className="font-bold">Agent Reasoning</h3>
@@ -620,7 +620,7 @@ export function ResultsDashboard({
           </div>
         </div>
 
-        <div className="bg-card rounded-2xl border shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-card rounded-2xl border shadow-sm overflow-hidden flex flex-col h-[600px]">
           <div className="p-4 border-b bg-muted/30 flex items-center gap-2">
             <Server className="w-5 h-5 text-secondary" />
             <h3 className="font-bold">MCP Tool Activity</h3>
@@ -663,7 +663,7 @@ export function ResultsDashboard({
           </div>
         </div>
 
-        <div className="bg-card rounded-2xl border shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-card rounded-2xl border shadow-sm overflow-hidden flex flex-col h-[600px]">
           <div className="p-4 border-b bg-muted/30 flex items-center gap-2 justify-between">
             <div className="flex items-center gap-2">
               <Droplets className="w-5 h-5 text-accent-foreground" />

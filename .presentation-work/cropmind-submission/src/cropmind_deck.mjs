@@ -67,7 +67,7 @@ function metric(label, value, note, accent = C.green) {
 function tag(value, color = C.green) {
   return panel(
     { fill: "#FFFFFF", padding: { x: 16, y: 8 }, width: hug, height: hug },
-    t(value, { size: 16, bold: true, color }),
+    t(value, { size: 16, bold: true, color, width: hug }),
   );
 }
 

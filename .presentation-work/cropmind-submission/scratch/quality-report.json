@@ -1,0 +1,14 @@
+{
+  "workspace": "C:\\Users\\brlik\\Downloads\\Proof-Plan\\CropMind\\.presentation-work\\cropmind-submission",
+  "pptx": "C:\\Users\\brlik\\Downloads\\Proof-Plan\\CropMind\\.presentation-work\\cropmind-submission\\output\\output.pptx",
+  "checks": {
+    "output_hygiene": {
+      "output_dir": "C:\\Users\\brlik\\Downloads\\Proof-Plan\\CropMind\\.presentation-work\\cropmind-submission\\output",
+      "unexpected_files": []
+    }
+  },
+  "failures": [
+    "PPTX package inspection failed: unzip -Z1 C:\\Users\\brlik\\Downloads\\Proof-Plan\\CropMind\\.presentation-work\\cropmind-submission\\output\\output.pptx failed"
+  ],
+  "warnings": []
+}
