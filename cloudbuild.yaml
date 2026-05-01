@@ -58,7 +58,11 @@ steps:
       - '--add-cloudsql-instances'
       - 'YOUR_PROJECT_ID:us-central1:cropmind-db'
       - '--set-env-vars'
-      - 'NODE_ENV=production,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=true,DATABASE_URL=postgresql://REDACTED_USER:REDACTED_PASSWORD@localhost/cropmind?host=/cloudsql/YOUR_PROJECT_ID:us-central1:cropmind-db'
+      - 'NODE_ENV=production,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=true'
+      - '--set-secrets'
+      - 'DATABASE_URL=cropmind-database-url:latest'
+      - '--add-cloudsql-instances'
+      - '$PROJECT_ID:us-central1:cropmind-db'
     id: 'deploy-cloud-run'
     waitFor: ['push-image']
 
